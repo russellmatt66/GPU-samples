@@ -67,15 +67,18 @@ int main(){
     /* Calculate execution configuration */
     int num_blocks, num_threads_per_block; 
     num_blocks = 1;
-    num_threads_per_block = 512;
+    num_threads_per_block = 32;
 
     initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N);
     checkCuda(cudaDeviceSynchronize());
 
-    // Call innerProduct Kernel 
+    /* Copy from host to device */
+    checkCuda(cudaMemcpy());
 
-    innerProduct<<<num_blocks, num_threads_per_block>>>(sum, a, b, N);
-    checkCuda(cudaDeviceSynchronize());
+    // Call innerProduct Kernel 
+    /* There's an illegal memory access occuring in here */
+    // innerProduct<<<num_blocks, num_threads_per_block>>>(sum, a, b, N);
+    // checkCuda(cudaDeviceSynchronize());
     
     // Free arrays
     checkCuda(cudaFree(a));
