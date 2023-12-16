@@ -17,7 +17,7 @@ __global__ void innerProduct(float *sum, float *a, float *b, int N){
     int partial = 0;
 
     for (int it = threadNum; it < N; it += nthreads ){
-        partial += a[it] + b[it];
+        partial += a[it] * b[it];
     }
 
     atomicAdd(sum, partial);
@@ -63,11 +63,10 @@ int main(){
     checkCuda(cudaMallocManaged(&b, size));
 
     // Initialize vectors with random data
-    
-    /* Calculate execution configuration */
+    /* Set up execution configuration */
     int num_blocks, num_threads_per_block; 
-    num_blocks = 1;
     num_threads_per_block = 32;
+    num_blocks = 1;
 
     initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N);
     checkCuda(cudaDeviceSynchronize());
