@@ -17,29 +17,28 @@ __global__ void innerProduct(float *sum, float *a, float *b, int N){
     int partial = 0;
 
     for (int it = threadNum; it < N; it += nthreads ){
-        partial += a[it] * b[it];
+        partial += a[it] * b[it]; // 2 Memory Read + 1 Write
     }
 
     atomicAdd(sum, partial);
 }
 
 // Fill out a and b with random values according to grid-stride method 
-__global__ void initRandom(float *a, float* b, int N){
+__global__ void initRandom(float *a, float* b, int N, unsigned long long seed){
     int threadNum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
     int nthreads = blockDim.x * gridDim.x;
 
-    /* Implement device random number generation with curand */
+    // Implement device random number generation with curand 
     curandState_t state;
-    unsigned long long seed = 1234;
     if (threadNum < N){
         curand_init(seed, threadNum, 0, &state);
     }
 
     for (int it = threadNum; it < N; it += nthreads){
         float aRandomValue = static_cast<float>(curand_uniform(&state));
-        a[threadNum] = aRandomValue;
+        a[threadNum] = aRandomValue; // 1 Memory Read + 1 Write
         float bRandomValue = static_cast<float>(curand_uniform(&state));
-        b[threadNum] = bRandomValue;
+        b[threadNum] = bRandomValue; // 1 Memory Read + 1 Write
     }
 }
 
@@ -53,6 +52,7 @@ inline cudaError_t checkCuda(cudaError_t result)
   return result;
 }
 
+/* Pass execution configuration size, and array length in via command-line */
 int main(){
     // Time code using CUDA events
     cudaEvent_t start_rand, stop_rand, start_inner, stop_inner;
@@ -64,7 +64,7 @@ int main(){
     cudaEventCreate(&stop_inner);
 
     // Declare variables and allocate arrays
-    int N = 2<<20; // left-shifting 2 twenty-times gives 2^20
+    int N = 2<<22; // left-shifting 2 twenty-times gives 2^21
     float *a, *b, *device_sum = 0;
 
     int size = N * sizeof(float);
@@ -73,13 +73,15 @@ int main(){
     checkCuda(cudaMallocManaged(&device_sum, sizeof(float)));
 
     // Initialize vectors with random data
-    /* Set up execution configuration */
+    /* Set execution configuration using command-line args */
     int num_blocks, num_threads_per_block; 
     num_threads_per_block = 32;
     num_blocks = 32;
 
+    unsigned long long seed = 1234;
+
     cudaEventRecord(start_rand,0);
-    initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N);
+    initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N, seed);
     cudaEventRecord(stop_rand,0);
     cudaEventSynchronize(stop_rand);
     cudaEventElapsedTime(&time_rand, start_rand, stop_rand);
@@ -95,8 +97,8 @@ int main(){
     
     /* Write data out to validate */
     // Print kernel execution times
-    printf("Random initialize kernel took %lf milliseconds\n", time_rand);
-    printf("Inner product kernel took %lf milliseconds\n", time_inner);
+    printf("initRandom kernel took %lf milliseconds\n", time_rand);
+    printf("innerProduct kernel took %lf milliseconds\n", time_inner);
 
     // Destroy CUDA Events
     cudaEventDestroy(start_rand);
