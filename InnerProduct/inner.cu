@@ -1,5 +1,5 @@
 /*
-Kernel for benchmarking inner product computation using GeForce GTX 960 
+Kernel for benchmarking inner product computation using GeForce GTX 960 (CC 5.2)
 */
 
 #include <stdio.h>
@@ -37,9 +37,10 @@ __global__ void initRandom(float *a, float* b, const int N, const unsigned long 
 
     for (int it = threadNum; it < N; it += nthreads){
         float aRandomValue = static_cast<float>(curand_uniform(&state));
-        a[threadNum] = aRandomValue; // 1 Memory Read + 1 Write
         float bRandomValue = static_cast<float>(curand_uniform(&state));
-        b[threadNum] = bRandomValue; // 1 Memory Read + 1 Write
+        // Maxwell 5.2 does  not support a double AtomicAdd() operation, so need to decimate random values to prevent overflow
+        a[threadNum] = 0.1*aRandomValue; // 1 Memory Read + 1 Write
+        b[threadNum] = 0.1*bRandomValue; // 1 Memory Read + 1 Write
     }
 }
 
@@ -53,7 +54,13 @@ inline cudaError_t checkCuda(cudaError_t result)
   return result;
 }
 
-/* Pass execution configuration size, and array length in via command-line */
+void innerProductCPU(float *sum, const float *a, const float *b, const int N){
+    for (int i = 0; i < N; i++){
+        *sum += a[i] * b[i];
+    }
+}
+
+// Pass execution configuration size, and array length in via command-line 
 int main(int argc, char* argv[]){
     int lshift = std::stoi(argv[1]); // N = 2^(lfshift + 1)
     // Time code using CUDA events
@@ -67,20 +74,21 @@ int main(int argc, char* argv[]){
 
     // Declare variables and allocate arrays
     int N = 2<<lshift; // left-shifting 2 twenty-times gives 2^23
-    float *a, *b, *device_sum = 0;
+    float *a, *b, *device_sum;
 
     int size = N * sizeof(float);
     checkCuda(cudaMallocManaged(&a, size));
     checkCuda(cudaMallocManaged(&b, size));
     checkCuda(cudaMallocManaged(&device_sum, sizeof(float)));
 
-    // Initialize vectors with random data
-    /* Set execution configuration using command-line args */
+    *device_sum = 0.0;
+
+    // Set execution configuration using command-line args 
     int num_blocks, num_threads_per_block; 
     num_threads_per_block = std::stoi(argv[2]);
     num_blocks = N / num_threads_per_block;
 
-
+    // Initialize vectors with random data
     unsigned long long seed = 1234;
 
     cudaEventRecord(start_rand,0);
@@ -90,24 +98,26 @@ int main(int argc, char* argv[]){
     cudaEventElapsedTime(&time_rand, start_rand, stop_rand);
     // checkCuda(cudaDeviceSynchronize());
 
-    // Call innerProduct Kernel 
+    // Call innerProduct kernel 
     cudaEventRecord(start_inner,0);
     innerProduct<<<num_blocks, num_threads_per_block>>>(device_sum, a, b, N);
     cudaEventRecord(stop_inner,0);
     cudaEventSynchronize(stop_inner);
     cudaEventElapsedTime(&time_inner, start_inner, stop_inner);
     // checkCuda(cudaDeviceSynchronize());
-    
-    /* Write data out to validate */
-    std::ofstream output_file;
-    output_file.open("innercu.csv", std::ofstream::trunc);
-    output_file << "i,a,b" << std::endl;
 
-    for (int i = 0; i < N; i++){
-        output_file << i << "," << a[i] << "," << b[i] << std::endl;
-    }
 
-    printf("The inner product calculated by the CUDA kernel is %lf\n", *device_sum);
+    /* Calculate CPU innerProduct and compare */
+    float *host_sum;
+    host_sum = (float *)malloc(sizeof(float));
+    *host_sum = 0.0f;
+
+    innerProductCPU(host_sum, a, b, N);
+
+    float L1_norm = fabsf32(*device_sum - *host_sum);
+
+    // printf("The inner product calculated by the CUDA kernel is %lf\n", *device_sum);
+    printf("The L1 norm between the GPU and CPU inner products is %lf\n", L1_norm);
 
     // Print kernel execution times
     printf("initRandom kernel took %lf milliseconds\n", time_rand);
@@ -123,5 +133,6 @@ int main(int argc, char* argv[]){
     checkCuda(cudaFree(a));
     checkCuda(cudaFree(b));
     checkCuda(cudaFree(device_sum));
-    output_file.close();
+    free(host_sum);
+    // output_file.close();
 }

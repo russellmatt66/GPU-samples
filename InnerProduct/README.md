@@ -3,6 +3,12 @@ Explore the difference in performance between a GPU and CPU using the calculatio
 
 # Run Instructions
 inner.cu
-- Compile with: 
-- Run on command-line with: $./innerCU lshift num_blocks num_threads_per_block
--- 'lshift' is log2(N) - 1, where N is the length of the array whose inner product is to be calculated 
+- Compile with: nvcc -o innerCU inner.cu 
+- Run on command-line with: $./innerCU lshift num_threads_per_block
+-- 'lshift' = log2(N) - 1, where N is the length of the arrays whose inner product is to be calculated 
+
+inner.c
+- 
+
+inner.cpp
+- 
