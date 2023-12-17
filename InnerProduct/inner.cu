@@ -54,6 +54,15 @@ inline cudaError_t checkCuda(cudaError_t result)
 }
 
 int main(){
+    // Time code using CUDA events
+    cudaEvent_t start_rand, stop_rand, start_inner, stop_inner;
+    float time_rand, time_inner;
+
+    cudaEventCreate(&start_rand);
+    cudaEventCreate(&stop_rand);
+    cudaEventCreate(&start_inner);
+    cudaEventCreate(&stop_inner);
+
     // Declare variables and allocate arrays
     int N = 2<<20; // left-shifting 2 twenty-times gives 2^20
     float *a, *b, *device_sum = 0;
@@ -69,16 +78,34 @@ int main(){
     num_threads_per_block = 32;
     num_blocks = 32;
 
+    cudaEventRecord(start_rand,0);
     initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N);
-    checkCuda(cudaDeviceSynchronize());
+    cudaEventRecord(stop_rand,0);
+    cudaEventSynchronize(stop_rand);
+    cudaEventElapsedTime(&time_rand, start_rand, stop_rand);
+    // checkCuda(cudaDeviceSynchronize());
 
     // Call innerProduct Kernel 
+    cudaEventRecord(start_inner,0);
     innerProduct<<<num_blocks, num_threads_per_block>>>(device_sum, a, b, N);
-    checkCuda(cudaDeviceSynchronize());
+    cudaEventRecord(stop_inner,0);
+    cudaEventSynchronize(stop_inner);
+    cudaEventElapsedTime(&time_inner, start_inner, stop_inner);
+    // checkCuda(cudaDeviceSynchronize());
     
     /* Write data out to validate */
+    // Print kernel execution times
+    printf("Random initialize kernel took %lf milliseconds\n", time_rand);
+    printf("Inner product kernel took %lf milliseconds\n", time_inner);
 
-    // Free arrays
+    // Destroy CUDA Events
+    cudaEventDestroy(start_rand);
+    cudaEventDestroy(stop_rand);
+    cudaEventDestroy(start_inner);
+    cudaEventDestroy(stop_inner);
+
+    // Free arrays and device_sum
     checkCuda(cudaFree(a));
     checkCuda(cudaFree(b));
+    checkCuda(cudaFree(device_sum));
 }
