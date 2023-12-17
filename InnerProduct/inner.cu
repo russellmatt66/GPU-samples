@@ -56,29 +56,28 @@ inline cudaError_t checkCuda(cudaError_t result)
 int main(){
     // Declare variables and allocate arrays
     int N = 2<<20; // left-shifting 2 twenty-times gives 2^20
-    float *a, *b, *sum = 0;
+    float *a, *b, *device_sum = 0;
 
     int size = N * sizeof(float);
     checkCuda(cudaMallocManaged(&a, size));
     checkCuda(cudaMallocManaged(&b, size));
+    checkCuda(cudaMallocManaged(&device_sum, sizeof(float)));
 
     // Initialize vectors with random data
     /* Set up execution configuration */
     int num_blocks, num_threads_per_block; 
     num_threads_per_block = 32;
-    num_blocks = 1;
+    num_blocks = 32;
 
     initRandom<<<num_blocks, num_threads_per_block>>>(a, b, N);
     checkCuda(cudaDeviceSynchronize());
 
-    /* Copy from host to device */
-    checkCuda(cudaMemcpy());
-
     // Call innerProduct Kernel 
-    /* There's an illegal memory access occuring in here */
-    // innerProduct<<<num_blocks, num_threads_per_block>>>(sum, a, b, N);
-    // checkCuda(cudaDeviceSynchronize());
+    innerProduct<<<num_blocks, num_threads_per_block>>>(device_sum, a, b, N);
+    checkCuda(cudaDeviceSynchronize());
     
+    /* Write data out to validate */
+
     // Free arrays
     checkCuda(cudaFree(a));
     checkCuda(cudaFree(b));
