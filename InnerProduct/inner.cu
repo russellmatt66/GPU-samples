@@ -8,13 +8,14 @@ Kernel for benchmarking inner product computation using GeForce GTX 960
 #include <curand.h>
 #include <curand_kernel.h>
 #include <math.h>
+#include <fstream>
 
-// Should have double, and 16-bit (?) kernels as well ("?" = if possible)
-__global__ void innerProduct(float *sum, float *a, float *b, int N){
+// 
+__global__ void innerProduct(float *sum, const float *a, const float *b, const int N){
     // Assume 1D execution configuration
     int threadNum = threadIdx.x + blockDim.x * blockIdx.x;
     int nthreads = blockDim.x * gridDim.x;
-    int partial = 0;
+    float partial = 0.0;
 
     for (int it = threadNum; it < N; it += nthreads ){
         partial += a[it] * b[it]; // 2 Memory Read + 1 Write
@@ -24,7 +25,7 @@ __global__ void innerProduct(float *sum, float *a, float *b, int N){
 }
 
 // Fill out a and b with random values according to grid-stride method 
-__global__ void initRandom(float *a, float* b, int N, unsigned long long seed){
+__global__ void initRandom(float *a, float* b, const int N, const unsigned long long seed){
     int threadNum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
     int nthreads = blockDim.x * gridDim.x;
 
@@ -53,7 +54,8 @@ inline cudaError_t checkCuda(cudaError_t result)
 }
 
 /* Pass execution configuration size, and array length in via command-line */
-int main(){
+int main(int argc, char* argv[]){
+    int lshift = std::stoi(argv[1]); // N = 2^(lfshift + 1)
     // Time code using CUDA events
     cudaEvent_t start_rand, stop_rand, start_inner, stop_inner;
     float time_rand, time_inner;
@@ -64,7 +66,7 @@ int main(){
     cudaEventCreate(&stop_inner);
 
     // Declare variables and allocate arrays
-    int N = 2<<22; // left-shifting 2 twenty-times gives 2^21
+    int N = 2<<lshift; // left-shifting 2 twenty-times gives 2^23
     float *a, *b, *device_sum = 0;
 
     int size = N * sizeof(float);
@@ -75,8 +77,9 @@ int main(){
     // Initialize vectors with random data
     /* Set execution configuration using command-line args */
     int num_blocks, num_threads_per_block; 
-    num_threads_per_block = 32;
-    num_blocks = 32;
+    num_threads_per_block = std::stoi(argv[2]);
+    num_blocks = N / num_threads_per_block;
+
 
     unsigned long long seed = 1234;
 
@@ -96,6 +99,16 @@ int main(){
     // checkCuda(cudaDeviceSynchronize());
     
     /* Write data out to validate */
+    std::ofstream output_file;
+    output_file.open("innercu.csv", std::ofstream::trunc);
+    output_file << "i,a,b" << std::endl;
+
+    for (int i = 0; i < N; i++){
+        output_file << i << "," << a[i] << "," << b[i] << std::endl;
+    }
+
+    printf("The inner product calculated by the CUDA kernel is %lf\n", *device_sum);
+
     // Print kernel execution times
     printf("initRandom kernel took %lf milliseconds\n", time_rand);
     printf("innerProduct kernel took %lf milliseconds\n", time_inner);
@@ -110,4 +123,5 @@ int main(){
     checkCuda(cudaFree(a));
     checkCuda(cudaFree(b));
     checkCuda(cudaFree(device_sum));
+    output_file.close();
 }
