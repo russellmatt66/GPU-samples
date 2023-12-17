@@ -39,8 +39,8 @@ __global__ void initRandom(float *a, float* b, const int N, const unsigned long 
         float aRandomValue = static_cast<float>(curand_uniform(&state));
         float bRandomValue = static_cast<float>(curand_uniform(&state));
         // Maxwell 5.2 does  not support a double AtomicAdd() operation, so need to decimate random values to prevent overflow
-        a[threadNum] = 0.1*aRandomValue; // 1 Memory Read + 1 Write
-        b[threadNum] = 0.1*bRandomValue; // 1 Memory Read + 1 Write
+        a[it] = 0.1*aRandomValue; // 1 Memory Read + 1 Write
+        b[it] = 0.1*bRandomValue; // 1 Memory Read + 1 Write
     }
 }
 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
     // Set execution configuration using command-line args 
     int num_blocks, num_threads_per_block; 
     num_threads_per_block = std::stoi(argv[2]);
-    num_blocks = N / num_threads_per_block;
+    num_blocks = 8;
 
     // Initialize vectors with random data
     unsigned long long seed = 1234;
@@ -114,9 +114,11 @@ int main(int argc, char* argv[]){
 
     innerProductCPU(host_sum, a, b, N);
 
-    float L1_norm = fabsf32(*device_sum - *host_sum);
+    float L1_norm = fabsf32(*device_sum - *host_sum) / *host_sum;
 
     // printf("The inner product calculated by the CUDA kernel is %lf\n", *device_sum);
+    printf("innerProduct = %lf\n", *device_sum);
+    printf("innerProductCPU = %lf\n", *host_sum);
     printf("The L1 norm between the GPU and CPU inner products is %lf\n", L1_norm);
 
     // Print kernel execution times
