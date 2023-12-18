@@ -121,6 +121,31 @@ __global__ void InitializeIndices(int *item_indices, const int Ni){
     }
 }
 
+// Set all to false
+__global__ void InitializeBool(bool *is_same, const int Ni){
+    int tnum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
+    int nthreads = blockDim.x * gridDim.x;
+    
+    for (int i = tnum; i < Ni; i += nthreads){
+        is_same[i] = false;
+    }
+}
+
+// Validate
+__global__ void CompareSearchesGPU(const int* binary_indices, const int* linear_indices, const int Ni, bool* is_same, bool* passed){
+    int tnum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
+    int nthreads = blockDim.x * gridDim.x;
+
+    for (int i = tnum; i < Ni; i += nthreads){
+        if(binary_indices[i] == linear_indices[i]){
+            is_same[i] = true;
+        }
+        else {
+            *passed = false; // Comes in true
+        }
+    }
+}
+
 /*
 Host Code
 */
@@ -188,8 +213,11 @@ inline cudaError_t checkCuda(cudaError_t result)
 // Driver Code
 int main(int argc, char* argv[]){
     /* Initialize grid, and particles inside grid */
-    int Ni = std::stoi(argv[1]); // Number of items
-    int Nx = std::stoi(argv[2]); // Number of grid points
+    int Ni = std::stoi(argv[1]); // Number of items (power of two)
+    int Nx = std::stoi(argv[2]); // Number of grid points (power of two)
+
+    Ni = 1<<Ni; // lshift a binary number Ni times is equivalent to multiplying it by 2^Ni
+    Nx = 1<<Nx; // " " " Nx " " " " " " " " 2^Nx
 
     // Device data
     float *x_grid, *particle_positions;
@@ -222,6 +250,19 @@ int main(int argc, char* argv[]){
     checkCuda(cudaDeviceSynchronize());    
 
     /* Validate device code using Linear Search */
+    bool *is_same, *passed;
+
+    checkCuda(cudaMallocManaged(&is_same, Ni));
+    checkCuda(cudaMallocManaged(&passed, sizeof(bool)));
+
+    *passed = true;
+    InitializeBool<<<num_blocks, num_threads_per_block>>>(is_same, Ni);
+    checkCuda(cudaDeviceSynchronize());
+
+    CompareSearchesGPU<<<num_blocks, num_threads_per_block>>>(item_indices, item_indices_linear, Ni, is_same, passed);
+    checkCuda(cudaDeviceSynchronize());   
+
+    printf("Are linear and binary search the same? %B\n", *passed);
 
     /* Call CPU code */
 
@@ -234,4 +275,6 @@ int main(int argc, char* argv[]){
     cudaFree(particle_positions);
     cudaFree(item_indices);
     cudaFree(item_indices_linear);
+    cudaFree(is_same);
+    cudaFree(passed);
 }
