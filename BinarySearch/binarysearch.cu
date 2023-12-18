@@ -9,6 +9,9 @@
 #include <fstream>
 
 
+/*
+Device Code
+*/
 // Locates all the items (particles) in *item_positions, using binary search.
 __global__ void BinarySearchGPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
     // Grid-Stride through array of item positions and call bs() for each element
@@ -52,13 +55,25 @@ __device__ void BinarySearchDevice(const float *grid, const int Nx, const float 
 }
 
 /* Locates all the particles in *item_positions, using Linear Search */
-__global__ void LinearSearchGPU(){
-    /* Code goes here */
+__global__ void LinearSearchGPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
+    // Grid-stride through *item_positions and perform Linear Search to find each one
+    int tnum = threadIdx.x + blockDim.x * blockIdx.x;
+    int nthreads = blockDim.x * gridDim.x;
+
+    for (int i = tnum; i < Ni; i += nthreads){
+        LinearSearchDevice(grid, Nx, item_positions[i], item_indices, i);
+    }
 }
 
-/* Device implementation of Linear Search */
-__device__ void LinearSearchDevice(){
-    /* Code goes here */
+// Device implementation of Linear Search 
+__device__ void LinearSearchDevice(const float *grid, const int Nx, const float item_position, int *item_indices, const int i){
+    /* I know there's a way to do this concurrently, but grid-striding entangles number of threads with size of grid */
+    // Serial raster scan becomes significant for large Nx
+    for (int j = 0; j < Nx-1; j++){
+        if (item_position >= grid[j] && item_position < grid[j+1]){
+            item_indices[i] = j; // This will come in initialized to -1
+        }
+    }
 }
 
 // Grid-Stride through grid and set uniformly spaced values
@@ -106,6 +121,9 @@ __global__ void InitializeIndices(int *item_indices, const int Ni){
     }
 }
 
+/*
+Host Code
+*/
 // CPU wrapper for locating all the objects that are within the grid, using binary search. 
 void BinarySearchCPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
     for (int i = 0; i < Ni; i++){
@@ -139,6 +157,23 @@ int BinarySearchHost(const float *grid, const int Nx, const float item_position)
     return -1; // Not found
 }
 
+void LinearSearchCPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
+    for (int i = 0; i < Ni; i++){
+        item_indices[i] = LinearSearchHost(grid, Nx, item_positions[i]);
+    }
+}
+
+int LinearSearchHost(const float *grid, const int Nx, const float item_position){
+    
+    for (int j = 0; j < Nx-1; j++){
+        if (item_position >= grid[j] && item_position < grid[j+1]){
+            return j;
+        }
+    }
+
+    return -1; // Not found
+}
+
 // Error-checking Macro from NVIDIA DLI:GSAC CUDA C/C++ course
 inline cudaError_t checkCuda(cudaError_t result)
 {
@@ -158,11 +193,12 @@ int main(int argc, char* argv[]){
 
     // Device data
     float *x_grid, *particle_positions;
-    int *item_indices;
+    int *item_indices, *item_indices_linear;
 
     checkCuda(cudaMallocManaged(&x_grid, Nx));
     checkCuda(cudaMallocManaged(&particle_positions, Ni));
-    checkCuda(cudaMallocManaged(&item_indices, Ni));
+    checkCuda(cudaMallocManaged(&item_indices, Ni)); // where the particles were found with binary search
+    checkCuda(cudaMallocManaged(&item_indices_linear, Ni)); // where the particles were found with linear search
 
     float x_min = -M_PI, x_max = M_PI; /* Should I refactor this to accept these as input? */
     float dx = (x_max - x_min) / (float(Nx) - 1.0);
@@ -177,17 +213,19 @@ int main(int argc, char* argv[]){
     InitializeGrid<<<num_blocks, num_threads_per_block>>>(x_grid, x_min, dx, Nx); // uniformly-spaced
     InitializeParticles<<<num_blocks, num_threads_per_block>>>(particle_positions, Ni, seed, x_min, x_max); // random
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices, Ni); // all -1
+    InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices_linear, Ni); // " "
     checkCuda(cudaDeviceSynchronize());
 
     // Call CUDA kernel to find them
     BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
-    /* Write Linear Search to validate */
+    LinearSearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices_linear); // Validates binary search
     checkCuda(cudaDeviceSynchronize());    
 
-    /* Validate against Linear Search */
+    /* Validate device code using Linear Search */
 
     /* Call CPU code */
 
+    /* Validate host code using Linear Search */
 
     /* Free CPU objects */
 
@@ -195,4 +233,5 @@ int main(int argc, char* argv[]){
     cudaFree(x_grid);
     cudaFree(particle_positions);
     cudaFree(item_indices);
+    cudaFree(item_indices_linear);
 }
