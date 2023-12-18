@@ -8,6 +8,11 @@
 #include <math.h>
 #include <fstream>
 
+__device__ void BinarySearchDevice(const float *grid, const int Nx, const float item_position, int *item_indices, const int i);
+__device__ void LinearSearchDevice(const float *grid, const int Nx, const float item_position, int *item_indices, const int i);
+int BinarySearchHost(const float *grid, const int Nx, const float item_position);
+int LinearSearchHost(const float *grid, const int Nx, const float item_position);
+
 
 /*
 Device Code
@@ -37,7 +42,8 @@ __device__ void BinarySearchDevice(const float *grid, const int Nx, const float 
     int j = 0, counter = 0;
 
     while (low <= high){
-        j = floor((low + high) / 2);
+        // j = floor((low + high) / 2);
+        j = (low + high) / 2; // floored naturally
         counter++;
         if (grid[j] <= item_position && grid[j+1] > item_position){ // inside cell j
             item_indices[i] = j;
@@ -48,7 +54,7 @@ __device__ void BinarySearchDevice(const float *grid, const int Nx, const float 
         else if (item_position < grid[j]){ // item is to the left of cell j
             high = j;
         }
-        else if (counter >= sqrtf32(Nx)){ // It's not in the grid
+        else if (counter >= sqrtf(Nx)){ // It's not in the grid
             item_indices[i] = -1; 
         }
     }
@@ -262,7 +268,7 @@ int main(int argc, char* argv[]){
     CompareSearchesGPU<<<num_blocks, num_threads_per_block>>>(item_indices, item_indices_linear, Ni, is_same, passed);
     checkCuda(cudaDeviceSynchronize());   
 
-    printf("Are linear and binary search the same? %B\n", *passed);
+    printf("Are linear and binary search the same? %s\n", *passed ? "true" : "false");
 
     /* Call CPU code */
 
