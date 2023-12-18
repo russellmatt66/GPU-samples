@@ -7,8 +7,5 @@ inner.cu
 - Run on command-line with: $./innerCU lshift num_threads_per_block
 -- 'lshift' = log2(N) - 1, where N is the length of the arrays whose inner product is to be calculated 
 
-inner.c
-- 
+- Profile with: nsys profile --stats=true ./innerCU lshift num_threads_per_block
 
-inner.cpp
-- 
