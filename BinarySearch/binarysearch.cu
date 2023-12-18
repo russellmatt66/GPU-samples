@@ -1,6 +1,6 @@
 #include <cmath>
 
-// Locates all the items in *item_positions that are within the grid, using binary search.
+// Locates all the items in *item_positions, using binary search.
 __global__ void BinarySearchGPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
     /* Grid-Stride through array of item positions and call bs() for each element */
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
@@ -67,7 +67,7 @@ int BinarySearchHost(const float *grid, const int Nx, const float item_position)
         else if (item_position < grid[j]){ // item is to the left of cell j
             high = j;
         }
-        else if (counter >= sqrt(N)){ // It's not in the grid
+        else if (counter >= sqrt(Nx)){ // It's not in the grid
             return -1; 
         }
     }
