@@ -15,6 +15,11 @@ int LinearSearchHost(const float *grid, const int Nx, const float item_position)
 
 
 /*
+Development Tasks
+(1) Find where illegal memory access is occuring
+*/
+
+/*
 Device Code
 */
 // Locates all the items (particles) in *item_positions, using binary search.
