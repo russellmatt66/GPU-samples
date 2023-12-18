@@ -16,7 +16,7 @@ int LinearSearchHost(const float *grid, const int Nx, const float item_position)
 
 /*
 Development Tasks
-(1) Find where illegal memory access is occuring
+(1) Figure out why launch BinarySearchGPU launch is timing out
 */
 
 /*
@@ -99,7 +99,6 @@ __global__ void InitializeGrid(float *grid, const float x_min, const float dx, c
 
 // Grid-Stride through grid and set random values for particles
 /* Slower than it should bc of overhead from RNG */ 
-/* Illegal memory access error is coming from here */
 __global__ void InitializeParticles(float *particle_positions, const int Ni, const unsigned long long seed, const float x_min, const float x_max){
     int tnum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
     int nthreads = blockDim.x * gridDim.x;
@@ -246,10 +245,10 @@ int main(int argc, char* argv[]){
     float *x_grid, *particle_positions;
     int *item_indices, *item_indices_linear;
 
-    checkCuda(cudaMallocManaged(&x_grid, Nx));
-    checkCuda(cudaMallocManaged(&particle_positions, Ni));
-    checkCuda(cudaMallocManaged(&item_indices, Ni)); // where the particles were found with binary search
-    checkCuda(cudaMallocManaged(&item_indices_linear, Ni)); // where the particles were found with linear search
+    checkCuda(cudaMallocManaged(&x_grid, Nx*sizeof(float)));
+    checkCuda(cudaMallocManaged(&particle_positions, Ni*sizeof(float)));
+    checkCuda(cudaMallocManaged(&item_indices, Ni*sizeof(int))); // where the particles were found with binary search
+    checkCuda(cudaMallocManaged(&item_indices_linear, Ni*sizeof(int))); // where the particles were found with linear search
 
     float x_min = -M_PI, x_max = M_PI; /* Should I refactor this to accept these as input? */
     float dx = (x_max - x_min) / (float(Nx) - 1.0);
@@ -267,26 +266,28 @@ int main(int argc, char* argv[]){
 
     // Call CUDA kernels to initialize data
     InitializeGrid<<<num_blocks, num_threads_per_block>>>(x_grid, x_min, dx, Nx); // uniformly-spaced
-    checkCuda(cudaDeviceSynchronize());
+    // checkCuda(cudaDeviceSynchronize());
 
     InitializeParticles<<<num_blocks, num_threads_per_block>>>(particle_positions, Ni, seed, x_min, x_max); // random
-    checkCuda(cudaDeviceSynchronize());
+    // checkCuda(cudaDeviceSynchronize());
 
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices, Ni); // all -1
-    checkCuda(cudaDeviceSynchronize());
+    // checkCuda(cudaDeviceSynchronize());
 
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices_linear, Ni); // " "
     checkCuda(cudaDeviceSynchronize());
 
     // Call CUDA kernel to find particles
     BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
+    checkCuda(cudaDeviceSynchronize());  
+
     LinearSearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices_linear); // Validates binary search
     checkCuda(cudaDeviceSynchronize());    
 
     /* Validate device code using Linear Search */
     bool *is_same, *passed;
 
-    checkCuda(cudaMallocManaged(&is_same, Ni));
+    checkCuda(cudaMallocManaged(&is_same, Ni * sizeof(bool)));
     checkCuda(cudaMallocManaged(&passed, sizeof(bool)));
 
     *passed = true;
