@@ -93,12 +93,13 @@ __global__ void InitializeGrid(float *grid, const float x_min, const float dx, c
     int nthreads = blockDim.x * gridDim.x;
 
     for (int j = tnum; j < Nx; j += nthreads){
-        grid[j] = x_min + j * dx;
+        grid[j] = x_min + float(j) * dx;
     }
 }
 
 // Grid-Stride through grid and set random values for particles
 /* Slower than it should bc of overhead from RNG */ 
+/* Illegal memory access error is coming from here */
 __global__ void InitializeParticles(float *particle_positions, const int Ni, const unsigned long long seed, const float x_min, const float x_max){
     int tnum = threadIdx.x + blockDim.x * blockIdx.x; // tid or tnum is a better name for idiom
     int nthreads = blockDim.x * gridDim.x;
@@ -109,16 +110,13 @@ __global__ void InitializeParticles(float *particle_positions, const int Ni, con
         curand_init(seed, tnum, 0, &state);
     }
 
-    float aRandomValue = static_cast<float>(curand_uniform(&state));
-
     // Linear mapping from [0.0, 1.0] to [x_min, x_max]
     float b = x_min;
     float m = x_max - b;
 
-    aRandomValue = m * aRandomValue + b; 
-
-    for (int it = tnum; it < Ni; it += nthreads){
-        particle_positions[it] = aRandomValue;
+    for (int i = tnum; i < Ni; i += nthreads){
+        float aRandomValue = static_cast<float>(curand_uniform(&state));
+        particle_positions[i] = m * aRandomValue + b;
     }
 }
 
@@ -211,13 +209,24 @@ int LinearSearchHost(const float *grid, const int Nx, const float item_position)
 }
 
 // Error-checking Macro from NVIDIA DLI:GSAC CUDA C/C++ course
-inline cudaError_t checkCuda(cudaError_t result)
+// inline cudaError_t checkCuda(cudaError_t result)
+// {
+//   if (result != cudaSuccess) {
+//     fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+//     assert(result == cudaSuccess);
+//   }
+//   return result;
+// }
+
+// https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define checkCuda(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
-  if (result != cudaSuccess) {
-    fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-    assert(result == cudaSuccess);
-  }
-  return result;
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
 }
 
 
@@ -229,6 +238,9 @@ int main(int argc, char* argv[]){
 
     Ni = 1<<Ni; // lshift a binary number Ni times is equivalent to multiplying it by 2^Ni
     Nx = 1<<Nx; // " " " Nx " " " " " " " " 2^Nx
+
+    printf("%d\n", Ni);
+    printf("%d\n", Nx);
 
     // Device data
     float *x_grid, *particle_positions;
@@ -242,20 +254,31 @@ int main(int argc, char* argv[]){
     float x_min = -M_PI, x_max = M_PI; /* Should I refactor this to accept these as input? */
     float dx = (x_max - x_min) / (float(Nx) - 1.0);
 
+    printf("%lf\n", x_min);
+    printf("%lf\n", x_max);
+
     // Set execution configuration 
     int num_blocks = 8; // GeForce GTX 960 has 8 SMs
     int num_threads_per_block = std::stoi(argv[3]);
 
+    printf("%d\n", num_threads_per_block);
+
     unsigned long long seed = 1234;
 
-    // Call CUDA kernels to initialize device objects
+    // Call CUDA kernels to initialize data
     InitializeGrid<<<num_blocks, num_threads_per_block>>>(x_grid, x_min, dx, Nx); // uniformly-spaced
+    checkCuda(cudaDeviceSynchronize());
+
     InitializeParticles<<<num_blocks, num_threads_per_block>>>(particle_positions, Ni, seed, x_min, x_max); // random
+    checkCuda(cudaDeviceSynchronize());
+
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices, Ni); // all -1
+    checkCuda(cudaDeviceSynchronize());
+
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices_linear, Ni); // " "
     checkCuda(cudaDeviceSynchronize());
 
-    // Call CUDA kernel to find them
+    // Call CUDA kernel to find particles
     BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
     LinearSearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices_linear); // Validates binary search
     checkCuda(cudaDeviceSynchronize());    
@@ -288,4 +311,6 @@ int main(int argc, char* argv[]){
     cudaFree(item_indices_linear);
     cudaFree(is_same);
     cudaFree(passed);
+
+    return 0;
 }
