@@ -1,19 +1,19 @@
 #include <cmath>
 
 // Locates all the items in *item_positions that are within the grid, using binary search.
-__global__ void BinarySearchGPU(const float *grid, const float *item_positions, const int N, int *item_indices){
+__global__ void BinarySearchGPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
     /* Grid-Stride through array of item positions and call bs() for each element */
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
     int nthreads = blockDim.x * gridDim.x;
 
-    for (int i = tidx; i < N; i += nthreads){
-        BinarySearchDevice(grid, item_positions[i], N, item_indices, i);
+    for (int i = tidx; i < Ni; i += nthreads){
+        BinarySearchDevice(grid, Nx, item_positions[i], item_indices, i);
     }
 }
 
 // Implementation of Binary Search for use on the device
 /* Do __device__ specified functions need to return void? */
-__device__ void BinarySearchDevice(const float *grid, const float item_position, const int N, int *item_indices, const int i){
+__device__ void BinarySearchDevice(const float *grid, const int Nx, const float item_position, int *item_indices, const int i){
     /*
     N - size of grid 
     item_position - exactly where the object is located in the grid
@@ -21,7 +21,7 @@ __device__ void BinarySearchDevice(const float *grid, const float item_position,
     i - the location in item_indices where the found index (j) should be placed
     */
     int low = 0;
-    int high = N-1;
+    int high = Nx-1;
     int j = 0, counter = 0;
 
     while (low <= high){
@@ -36,23 +36,23 @@ __device__ void BinarySearchDevice(const float *grid, const float item_position,
         else if (item_position < grid[j]){ // item is to the left of cell j
             high = j;
         }
-        else if (counter >= sqrtf32(N)){ // It's not in the grid
+        else if (counter >= sqrtf32(Nx)){ // It's not in the grid
             item_indices[i] = -1; 
         }
     }
 }
 
 // CPU wrapper for locating all the objects that are within the grid, using binary search. 
-void BinarySearchCPU(const float *grid, const float *item_positions, const int N, int *item_indices){
-    for (int i = 0; i < N; i++){
-        item_indices[i] = BinarySearchHost(grid, item_positions[i], N);
+void BinarySearchCPU(const float *grid, const int Nx, const float *item_positions, const int Ni, int *item_indices){
+    for (int i = 0; i < Ni; i++){
+        item_indices[i] = BinarySearchHost(grid, Nx, item_positions[i]);
     }
 }
 
 // Host implementation of binary search
-int BinarySearchHost(const float *grid, const float item_position, const int N){
+int BinarySearchHost(const float *grid, const int Nx, const float item_position){
     int low = 0;
-    int high = N-1;
+    int high = Nx-1;
     int j = 0, counter = 0;
 
     while (low <= high){
