@@ -1,7 +1,8 @@
 # Directory Structure
 BinarySearch/ (FIN)
 - CUDA implementation of binary search
-- GPU: GeForce GTX 960 (Maxwell 5.2)
+- GPU: GeForce GTX 960 (Maxwell 5.2) 
+-- Theoretical Bandwidth = 112 GB/s
 - Effective Bandwidth = (6 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 = 44.5 GB/s (estimate)
 -- Ni = 2^27 particles (1 particle = 1 float)
 -- Nx = 2^13 gridpoints (binary search gives log(Nx) * (Br + Bw) number of total reads and writes)
