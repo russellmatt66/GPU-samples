@@ -16,7 +16,7 @@ int LinearSearchHost(const float *grid, const int Nx, const float item_position)
 
 /*
 Development Tasks
-(1) Figure out why launch BinarySearchGPU launch is timing out
+(1) Figure out why BinarySearchGPU launch is timing out
 */
 
 /*
@@ -31,6 +31,35 @@ __global__ void BinarySearchGPU(const float *grid, const int Nx, const float *it
     for (int i = tnum; i < Ni; i += nthreads){
         BinarySearchDevice(grid, Nx, item_positions[i], item_indices, i);
     }
+    // This isn't the problem
+    // int low = 0;
+    // int high = Nx-1;
+    // int j = 0, counter = 0;
+
+    // float item_position = 0.0f;
+
+    // for (int i = tnum; i < Ni; i += nthreads){
+    //     low = 0, high = Nx-1, j = 0, counter = 0;
+    //     item_position = item_positions[i];
+    //     while (low <= high){
+    //         // j = floor((low + high) / 2);
+    //         j = (low + high) / 2; // floored naturally
+    //         counter++;
+    //         if (grid[j] <= item_position && grid[j+1] > item_position){ // inside cell j
+    //             item_indices[i] = j;
+    //         }
+    //         else if (item_position > grid[j]){ // item is to the right of cell j
+    //             low = j+1;
+    //         }
+    //         else if (item_position < grid[j]){ // item is to the left of cell j
+    //             high = j;
+    //         }
+    //         else if (counter >= sqrtf(Nx)){ // It's not in the grid
+    //             item_indices[i] = -1; 
+    //         }
+    //     }
+    // }
+
 }
 
 // Implementation of Binary Search for use on the device
@@ -266,20 +295,14 @@ int main(int argc, char* argv[]){
 
     // Call CUDA kernels to initialize data
     InitializeGrid<<<num_blocks, num_threads_per_block>>>(x_grid, x_min, dx, Nx); // uniformly-spaced
-    // checkCuda(cudaDeviceSynchronize());
-
     InitializeParticles<<<num_blocks, num_threads_per_block>>>(particle_positions, Ni, seed, x_min, x_max); // random
-    // checkCuda(cudaDeviceSynchronize());
-
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices, Ni); // all -1
-    // checkCuda(cudaDeviceSynchronize());
-
     InitializeIndices<<<num_blocks, num_threads_per_block>>>(item_indices_linear, Ni); // " "
     checkCuda(cudaDeviceSynchronize());
 
     // Call CUDA kernel to find particles
+    /* This keeps timing out */
     BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
-    checkCuda(cudaDeviceSynchronize());  
 
     LinearSearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices_linear); // Validates binary search
     checkCuda(cudaDeviceSynchronize());    
