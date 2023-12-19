@@ -1,1 +1,0 @@
-/* Test the initialization functions from binarysearch.cu */
