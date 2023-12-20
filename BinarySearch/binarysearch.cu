@@ -113,12 +113,18 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 int main(int argc, char* argv[]){
     int Ni = std::stoi(argv[1]); // Number of items (power of two)
     int Nx = std::stoi(argv[2]); // Number of grid points (power of two)
+    int SM_multiplier = std::atoi(argv[3]);
+
 
     Ni = 1<<Ni; // lshift a binary number Ni times is equivalent to multiplying it by 2^Ni
     Nx = 1<<Nx; // " " " Nx " " " " " " " " 2^Nx
 
-    printf("Number of particles is: %d\n", Ni);
-    printf("Number of gridpoints is: %d\n", Nx);
+    // Device Attributes
+    int deviceId;
+    int numberOfSMs;
+
+    cudaGetDevice(&deviceId);
+    cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 
     // Device data
     float *x_grid, *particle_positions;
@@ -132,9 +138,9 @@ int main(int argc, char* argv[]){
     float dx = (x_max - x_min) / (float(Nx) - 1.0);
 
     // Set execution configuration 
-    int num_blocks = 8; // GeForce GTX 960 has 8 SMs
-    int num_threads_per_block = std::stoi(argv[3]);
-
+    int num_blocks = numberOfSMs * SM_multiplier; // GeForce GTX 960 has 8 SMs
+    int num_threads_per_block = std::stoi(argv[4]);
+    
     unsigned long long seed = 1234;
 
     // Call CUDA kernels to initialize data

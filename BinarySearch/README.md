@@ -21,4 +21,4 @@ binarysearch-validate.cu
 # Compile & Run Instructions
 (replace binarysearchvalidate-binary with a better, more concise name)
 $nvcc -o binarysearchvalidate-binary binarysearch-validate.cu
-$./binarysearchvalidate-binary Ni Nx num_threads_per_block
+$./binarysearchvalidate-binary Ni Nx SM_multiplier num_threads_per_block
