@@ -115,9 +115,14 @@ int main(int argc, char* argv[]){
     int Nx = std::stoi(argv[2]); // Number of grid points (power of two)
     int SM_multiplier = std::atoi(argv[3]);
 
-
     Ni = 1<<Ni; // lshift a binary number Ni times is equivalent to multiplying it by 2^Ni
     Nx = 1<<Nx; // " " " Nx " " " " " " " " 2^Nx
+
+    // Datafile for benchmarking data
+    std::ofstream benchmarkFile;
+
+    benchmarkFile.open("./benchmarking-data/N" + std::to_string(Ni) + "_Nx" + std::to_string(Nx) + ".csv");
+    benchmarkFile << "nrun,num_blocks,num_threads_per_block,taukern" << std::endl;
 
     // Device Attributes
     int deviceId;
@@ -143,6 +148,11 @@ int main(int argc, char* argv[]){
     
     unsigned long long seed = 1234;
 
+    cudaEvent_t start_search, stop_search;
+    cudaEventCreate(&start_search);
+    cudaEventCreate(&stop_search);
+    float time_search;
+
     // Call CUDA kernels to initialize data
     InitializeGrid<<<num_blocks, num_threads_per_block>>>(x_grid, x_min, dx, Nx); // uniformly-spaced
     InitializeParticles<<<num_blocks, num_threads_per_block>>>(particle_positions, Ni, seed, x_min, x_max); // random
@@ -150,8 +160,23 @@ int main(int argc, char* argv[]){
     checkCuda(cudaDeviceSynchronize());
 
     // Call CUDA kernel to find particles
-    BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
-    checkCuda(cudaDeviceSynchronize());
+    int num_runs = std::stoi(argv[5]);
 
+    for (int r = 0; r < num_runs; r++){
+        cudaEventRecord(start_search,0);
+        BinarySearchGPU<<<num_blocks, num_threads_per_block>>>(x_grid, Nx, particle_positions, Ni, item_indices);
+        cudaEventRecord(stop_search,0);
+        cudaEventSynchronize(stop_search);
+        cudaEventElapsedTime(&time_search, start_search, stop_search);
+        benchmarkFile << r << "," << num_blocks << "," << num_threads_per_block << "," << time_search << std::endl;
+    }
+
+    // checkCuda(cudaDeviceSynchronize());
+
+    // Free data
+    cudaFree(x_grid);
+    cudaFree(particle_positions);
+    cudaFree(item_indices);
+    benchmarkFile.close();
     return 0;
 }

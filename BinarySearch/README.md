@@ -16,7 +16,7 @@ Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
 # Directory Structure
 binarysearch-validate.cu
 - Code to validate binary search using linear search
-- Linear search kernel times out, only have a single GPU in machine so it's doing both display and compute, therefore watchdog timer
+- Linear search kernel will time out before GTX 960 VRAM fills up, only have a single GPU in machine so it's doing both display and compute, therefore watchdog timer
 
 # Compile & Run Instructions
 (replace binarysearchvalidate-binary with a better, more concise name)
