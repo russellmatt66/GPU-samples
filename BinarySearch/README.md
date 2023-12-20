@@ -1,5 +1,5 @@
 # Overview
-Project to implement binary search with CUDA, and compare performance to CPU code.
+Project to implement binary search with CUDA, and then find the configuration with the best performance by performing a parameter sweep of the kernel. 
 
 GPU: GeForce GTX 960 (Maxwell 5.2)
 
@@ -21,4 +21,9 @@ binarysearch-validate.cu
 # Compile & Run Instructions
 (replace binarysearchvalidate-binary with a better, more concise name)
 $nvcc -o binarysearchvalidate-binary binarysearch-validate.cu
-$./binarysearchvalidate-binary Ni Nx SM_multiplier num_threads_per_block
+$./binarysearchvalidate-binary Ni Nx SM_multiplier num_threads_per_block nruns
+- Ni: log2(number of particles)
+- Nx: log2(number of gridpoints)
+- SM_multiplier: determines the number of blocks in the execution configuration (=SM_multiplier * numberOfSMs)
+- num_threads_per_block: the number of threads per block in the execution configuration
+- nruns: the number of iterations to run a given configuration for
