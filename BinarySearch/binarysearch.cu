@@ -130,8 +130,11 @@ int main(int argc, char* argv[]){
 
     fs::create_directory("./benchmarking-data/" + pathString);
 
-    benchmarkFile.open("./benchmarking-data/" + pathString + "/" + pathString + ".csv");
-    benchmarkFile << "nrun,num_blocks,num_threads_per_block,taukern" << std::endl;
+    benchmarkFile.open("./benchmarking-data/" + pathString + "/" + pathString + ".csv", std::ios_base::app);
+
+    if (fs::is_empty("./benchmarking-data/" + pathString + "/" + pathString + ".csv")){
+        benchmarkFile << "nrun,num_blocks,num_threads_per_block,taukern" << std::endl;
+    }
 
     // Device Attributes
     int deviceId;
@@ -154,7 +157,7 @@ int main(int argc, char* argv[]){
     // Set execution configuration 
     int num_blocks = numberOfSMs * SM_multiplier; // GeForce GTX 960 has 8 SMs
     int num_threads_per_block = std::stoi(argv[4]);
-    
+
     unsigned long long seed = 1234;
 
     cudaEvent_t start_search, stop_search;
