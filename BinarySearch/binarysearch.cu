@@ -119,7 +119,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 int main(int argc, char* argv[]){
     int Ni = std::stoi(argv[1]); // Number of items (power of two)
     int Nx = std::stoi(argv[2]); // Number of grid points (power of two)
-    int SM_multiplier = std::atoi(argv[3]);
+    int SM_multiplier = std::stoi(argv[3]);
 
     Ni = 1<<Ni; // lshift a binary number Ni times is equivalent to multiplying it by 2^Ni
     Nx = 1<<Nx; // " " " Nx " " " " " " " " 2^Nx
