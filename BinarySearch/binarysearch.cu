@@ -7,7 +7,13 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include <math.h>
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <string>
+
+namespace fs = std::filesystem;
 
 __device__ void BinarySearchDevice(const float *grid, const int Nx, const float item_position, int *item_indices, const int i);
 
@@ -120,8 +126,11 @@ int main(int argc, char* argv[]){
 
     // Datafile for benchmarking data
     std::ofstream benchmarkFile;
+    std::string pathString = "N" + std::to_string(Ni) + "_Nx" + std::to_string(Nx);
 
-    benchmarkFile.open("./benchmarking-data/N" + std::to_string(Ni) + "_Nx" + std::to_string(Nx) + ".csv");
+    fs::create_directory("./benchmarking-data/" + pathString);
+
+    benchmarkFile.open("./benchmarking-data/" + pathString + "/" + pathString + ".csv");
     benchmarkFile << "nrun,num_blocks,num_threads_per_block,taukern" << std::endl;
 
     // Device Attributes
