@@ -20,6 +20,9 @@ binarysearch.cu
 automate-benchmarking.sh
 - Shell script that automates the benchmarking of the binary search CUDA kernel
 
+benchmarking-data/
+- Storage for benchmarking data
+
 binarysearch-validate.cu
 - Code to validate binary search using linear search
 - Linear search kernel will time out before GTX 960 VRAM fills up, only have a single GPU in machine so it's doing both display and compute, therefore watchdog timer
