@@ -14,6 +14,12 @@ Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
 (1) Perform parameter sweep of binary search kernel
 
 # Directory Structure
+binarysearch.cu
+- Code to benchmark binary search CUDA kernel
+
+automate-benchmarking.sh
+- Shell script that automates the benchmarking of the binary search CUDA kernel
+
 binarysearch-validate.cu
 - Code to validate binary search using linear search
 - Linear search kernel will time out before GTX 960 VRAM fills up, only have a single GPU in machine so it's doing both display and compute, therefore watchdog timer

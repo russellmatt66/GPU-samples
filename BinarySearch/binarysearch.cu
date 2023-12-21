@@ -126,13 +126,13 @@ int main(int argc, char* argv[]){
 
     // Datafile for benchmarking data
     std::ofstream benchmarkFile;
-    std::string pathString = "N" + std::to_string(Ni) + "_Nx" + std::to_string(Nx);
+    std::string pathString = "N" + std::to_string(Ni);;
 
     fs::create_directory("./benchmarking-data/" + pathString);
 
-    benchmarkFile.open("./benchmarking-data/" + pathString + "/" + pathString + ".csv", std::ios_base::app);
+    benchmarkFile.open("./benchmarking-data/" + pathString + "/" + pathString + "_Nx" + std::to_string(Nx) + ".csv", std::ios_base::app);
 
-    if (fs::is_empty("./benchmarking-data/" + pathString + "/" + pathString + ".csv")){
+    if (fs::is_empty("./benchmarking-data/" + pathString + "/" + pathString + "_Nx" + std::to_string(Nx) + ".csv")){
         benchmarkFile << "nrun,num_blocks,num_threads_per_block,taukern" << std::endl;
     }
 
