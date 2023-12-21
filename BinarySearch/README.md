@@ -11,14 +11,16 @@ Effective Bandwidth = (6 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 = 4
 Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
 
 # Current Tasks
-(1) Perform parameter sweep of binary search kernel
+(1) Write Python to analyze kernel benchmarking data
 
 # Directory Structure
 binarysearch.cu
 - Code to benchmark binary search CUDA kernel
+- Appends data to .csv files
 
 automate-benchmarking.sh
 - Shell script that automates the benchmarking of the binary search CUDA kernel
+- Need to run `find ./benchmarking-data/ -type f ! -name 'README.md' -exec rm -rf {} +` beforehand to delete everything (Don't need to do this - job complete)
 
 benchmarking-data/
 - Storage for benchmarking data
