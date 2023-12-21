@@ -6,6 +6,9 @@ max_Nx="$2" # number of gridpoints is log2(Nx)
 max_sm_multiplier="$3" # number of blocks is $this * numberOfSMs 
 max_num_threads_per="$4" # number of threads per block
 
+# Delete everything in benchmarking-data except for README
+find ./benchmarking-data/ -type f ! -name 'README.md' -exec rm -rf {} +
+
 # Nested for-loops because I'm doing a complete sweep 
 for ((ni = 10; ni <= $max_N; ni++)); do
     for ((nx = 10; nx <= $max_Nx; nx++)); do
