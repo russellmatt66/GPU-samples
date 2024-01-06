@@ -1,8 +1,8 @@
 # Overview
 Project to implement binary search with CUDA, and then find the configuration with the best performance by performing a parameter sweep of the kernel. 
 
+# Back-of-the-Envelope
 GPU: GeForce GTX 960 (Maxwell 5.2)
-
 Effective Bandwidth = (6 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 = 44.5 GB/s (estimate)
 - Ni = 2^27 particles (1 particle = 1 float)
 - Nx = 2^13 gridpoints (binary search gives log(Nx) * (Br + Bw) number of total reads and writes)
@@ -13,6 +13,7 @@ Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
 # Current Tasks
 (1) Write Python to analyze kernel benchmarking data
 (2) Run kernel parameter sweep on RTX 2060
+(3) For large data volumes, the output from the CUDA timer library is incoherent, therefore implement an ML model to predict the execution configuration performance
 
 # Directory Structure
 binarysearch.cu
@@ -25,6 +26,9 @@ automate-benchmarking.sh
 
 benchmarking-data/
 - Storage for benchmarking data
+
+machine-learning/
+- Contains Python code to analyze the performance data and predict the performance as a function of execution configuration 
 
 binarysearch-validate.cu
 - Code to validate binary search using linear search
