@@ -11,9 +11,12 @@ Effective Bandwidth = (4 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 ~ 3
 Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
 
 # Current Tasks
-(1) Write Python to analyze kernel benchmarking data
+(1) Write Python 
+- To clean kernel benchmarking data
+- To analyze kernel benchmarking data
+- For large data volumes, the output from the CUDA timer library is incoherent, therefore implement an ML model using sklearn in order to predict the execution configuration performance
 (2) Run kernel parameter sweep on RTX 2060
-(3) For large data volumes, the output from the CUDA timer library is incoherent, therefore implement an ML model to predict the execution configuration performance
+
 
 # Directory Structure
 binarysearch.cu

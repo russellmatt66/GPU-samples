@@ -9,5 +9,6 @@ import pandas as pd
 # (3) The remaining clean data will be used in the ML component as the training, and validation datasets.  
 
 # Questions:
-# (1) Should this module implement functions to clean kerneldata from a run on a device, or should it implement functionality to create a directory 
+# (Q1): Should this module implement functions to clean kerneldata from a run on a device, or should it implement functionality to create a directory 
 #   where the clean data, and list of malformed data, is stored so that it can be read in by analyze.py and randomforest.py?
+# (1A): It should implement functionality, see project.png for flow.  
