@@ -20,4 +20,7 @@ randomforest.py
 - Code that builds, trains, and deploys ML models on datasets from a '*-clean/' directory.
 - Purpose of the models, which are based on the Random Forest architecture, is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
 
+project.gv
+- Graphviz source code for visualizing the structure of the project
+
 # 
