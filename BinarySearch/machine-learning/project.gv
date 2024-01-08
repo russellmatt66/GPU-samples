@@ -1,6 +1,6 @@
 digraph RandomForest {
     "*-kerneldata/" -> "clean.py";
-    "clean.py" -> "*-clean/";
-    "*-clean/" -> "analyze.py";
-    "*-clean/" -> "randomforest.py"
+    "clean.py" -> "*-cleandata/";
+    "*-cleandata/" -> "analyze.py";
+    "*-cleandata/" -> "randomforest.py"
 }
