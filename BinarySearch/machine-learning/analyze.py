@@ -48,12 +48,16 @@ def computeStatistics(data_csv: str) -> (int, int, list, list, list, list):
 
     # Determine the unique execution configurations (should be same for every dataset)
     exec_config.append((df['num_blocks'].unique(),df['num_threads_per_block'].unique()))
+
     # Compute the average runtime, and variance, for each of the unique execution configurations
+    
     # Compute the (average) effective bandwidth for each of the unique execution configurations
+    
     return N, Nx, exec_config, avg_runtime, variance, eff_bandwidth
 
 # MAIN
 kernel_data = sys.argv[1]
+
 # Loop through all the datasets in '*-kerneldata/'
 all_files = glob.glob(os.path.join(kernel_data, '**', '*'), recursive=True)
 
@@ -68,3 +72,5 @@ print(e_c)
 print(a_r)
 print(v)
 print(e_b)
+
+# Add computeStatistics results to DataFrame
