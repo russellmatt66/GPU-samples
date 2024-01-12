@@ -3,18 +3,19 @@ Project to implement binary search with CUDA, and then find the configuration wi
 
 # Effective Bandwidth Calculation
 GPU: GeForce GTX 960 (Maxwell 5.2)
-Effective Bandwidth = (4 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 ~ 30 GB/s (estimate)
-- Ni = 2^27 particles (1 particle = 1 float)
-- Nx = 2^13 gridpoints (binary search gives log(Nx) * (Br + Bw) number of total reads and writes)
-- Br + Bw = 4 (see explanation in 'machine-learning/analyze.py')
-
-Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
+- Theoretical Bandwidth = 112 GB/s
+- BW_eff = ((Br + Bw) * avg_iters * 4 * N) / (taukern * 10**-3) / 10**9
+    - What the above formula says, is that the volumetric flow of data that the code supported during its operation (a rough measure of performance)
+    is equal to the total volume of data that it handled, divided by the runtime ('taukern' is in units of milliseconds), and then converted to GBs.
 
 # Current Tasks
-(1) Write Python 
-- To clean kernel benchmarking data
-- To analyze kernel benchmarking data
-- For large data volumes, the output from the CUDA timer library is incoherent, therefore implement an ML model using sklearn in order to predict the execution configuration performance
+(1) machine-learning/
+- Analyze gtx960 kernel benchmarking data
+    - Calculate correct effective bandwidth. Current implementation overestimates with avg_iters = log2(Nx).
+    - Obtain correct value for avg_iters using a method based on representing the algorithm outcomes with a binary tree.
+- Implement an ML model using sklearn in order to predict the execution configuration performance.
+    - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
+
 (2) Run kernel parameter sweep on RTX 2060
 
 

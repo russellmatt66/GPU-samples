@@ -88,6 +88,7 @@ def computeStatistics(data_csv: str) -> (int, int, list, list, list, list):
     # print(type(runtime_vals))
 
     # Compute the (average) effective bandwidth for each of the unique execution configurations
+    # THIS IS INCORRECT - 'np.log2(Nx)' overestimates the number of iterations it takes to find a particle on average  
     for runtime in avg_runtime:
         eff_bw = (3.0 * np.log2(Nx) * 4.0 * N) / (runtime * 10**-3) / 10**9 # runtime is in milliseconds
         eff_bandwidth.append(eff_bw)

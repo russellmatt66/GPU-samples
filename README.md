@@ -1,20 +1,19 @@
 # Directory Structure
-BinarySearch/ (FIN)
+BinarySearch/ (WIP)
 - CUDA implementation of binary search
 - GPU: GeForce GTX 960 (Maxwell 5.2) 
-
--- Theoretical Bandwidth = 112 GB/s
-
-- Effective Bandwidth = (3 * log2(8192) * 4 * 2^27) / (941444937*10^-9) / 10^9 = 44.5 GB/s (estimate)
-
--- Ni = 2^27 particles (1 particle = 1 float)
--- Nx = 2^13 gridpoints (binary search gives log(Nx) * (Br + Bw) number of total reads and writes)
--- Br + Bw ~ 3 (likeliest scenario)
-
-- Kernel walltime = .941 [s] to find 2^27 particles in a grid of 2^13 gridpoints
+- Current tasks:
+    - Analyze gtx960-cleandata/cleandata.csv
+    - Build, train, and deploy models to predict performance of "dirty" problem sizes
+    - Calculate the correct effective bandwidth values using binary tree (method described in the project sub-folder)
 
 InnerProduct/ (FIN)
 - CUDA implementation of inner product
 
-Transpose/ (WIP)
+Transpose/ (NYB)
 - CUDA implementation of matrix transpose 
+
+# Glossary
+- WIP = Work In Progress
+- FIN = Finished
+- NYB = Not Yet Begun

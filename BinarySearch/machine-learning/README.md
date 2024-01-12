@@ -8,9 +8,19 @@ gtx960-kerneldata/
 - Raw, benchmarking data for runs performed on a GeForce GTX 960
 - Contains some malformed data, but no missing values
 
+gtx960-cleandata/
+- Contains .csv containing statistics for all the clean datasets
+- Contains .txt listing all the dirty datasets
+
 clean.py
 - Script that operates on a '*-kerneldata/' folder which contains datasets from a benchmarking run on a GPU 
 - Produces a directory, '*-clean/', which contains the clean datasets, and a list of the malformed ones
+
+binarytree.c/
+- Library functions for instantiating a binary tree
+
+numiterations.c/
+- Use 'binarytree.c' to calculate correct value for 'avg_iters' to put into effective bandwidth formula
 
 analyze.py
 - Script that operates on a '*-clean/' directory, and computes a number of relevant performance metrics
@@ -22,5 +32,3 @@ randomforest.py
 
 project.gv
 - Graphviz source code for visualizing the structure of the project
-
-# 
