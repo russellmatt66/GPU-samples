@@ -34,3 +34,4 @@ with open(dirty_list, 'r') as dirty_files:
 print(dirty_problems)
 
 # Implement ML model based on RandomForest architecture in order to predict execution time of a 'dirty' problem
+features = ['N', 'Nx', 'num_blocks', 'num_threads_per_block']
