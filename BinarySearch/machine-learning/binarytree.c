@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Library functions for implementing Binary Tree
 typedef struct BTNode{
@@ -17,6 +18,9 @@ BTNode* createBTNode(int value, int depth) {
         newNode->depth = depth;
         newNode->left = NULL;
         newNode->right = NULL;
+    } else {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
     }
     return newNode;
 }
@@ -32,20 +36,30 @@ void addNode(BTNode* parent, BTNode* newNode, char* direction){
     return;
 }
 
+void printNode(BTNode* root){
+    // Traverse tree and print the values and depths out
+    if (root == NULL){
+        return;
+    }
+    printf("Algorithm finds particle in grid-cell %d, in %d iterations\n", root->val, root->depth);
+    printNode(root->left);
+    printNode(root->right);
+}
+
 // Free 'delNode'
 void freeNode(BTNode* delNode){
-    if (delNode != NULL){
-        free(delNode);
+    if (delNode == NULL){
+        return;
     }
-    return;
+    free(delNode);
 }
 
 // Free the entire memory of the tree 
 void freeBT(BTNode* root){
-    if (root != NULL){
+    if (root == NULL){
+        return;
+    }
         freeBT(root->left);
         freeBT(root->right);
-    }
-    freeNode(root);
-    return;
+        freeNode(root);
 }
