@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import os 
 import glob 
+import subprocess
 '''
 Clean the dataset
 Here, that means the following:
@@ -13,6 +14,52 @@ Here, that means the following:
 (3) The remaining clean data will be used in the ML component as the training, and validation datasets.
     - The data analysis component will analyze the clean data in order to compute statistics
 '''
+def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list, list, list):
+    df = pd.read_csv(data_csv)
+    exec_configs = [] 
+    avg_runtime = []
+    variance = []
+    eff_bandwidth = []
+    # Determine the problem size associated with the DataFrame
+    # - Use string methods to obtain N, Nx from data_csv
+    parts = data_csv.split('.')[0] # get rid of 'csv' ending
+    parts = parts.split('/')
+    for part in parts: 
+        if part.startswith('N'):
+            N = int(part[1:])
+            break
+
+    other_part = data_csv.split('.')[0] # get rid of 'csv ending
+    other_part = other_part.split('_')[1]
+    Nx = int(other_part[2:])
+
+    # Determine the unique execution configurations (should be same for every dataset)
+    num_blocks = df['num_blocks'].unique()
+    num_threads_per_block = df['num_threads_per_block'].unique()
+    for blocks in num_blocks:
+        for threads_per in num_threads_per_block:
+            exec_configs.append((blocks, threads_per)) 
+    # exec_configs.append((df['num_blocks'].unique(),df['num_threads_per_block'].unique()))
+
+    # Compute the average runtime, and variance, for each of the unique execution configurations
+    for exec_config in exec_configs:
+        runtime_vals = df.loc[(df['num_blocks'] == exec_config[0]) & (df['num_threads_per_block'] == exec_config[1]), 'taukern']
+        avg_runtime.append(runtime_vals.mean())
+        variance.append(runtime_vals.var())
+
+    # print(type(runtime_vals))
+
+    # Compute the (average) effective bandwidth for each of the unique execution configurations
+    # THIS IS INCORRECT - 'np.log2(Nx)' overestimates the number of iterations it takes to find a particle on average  
+    result = subprocess.check_output([num_iter_exe, str(Nx)], text=True)
+    avg_iter = float(result.strip())
+    print("{} iterations needed on average for binary search to find a particle for {} gridpoints".format(avg_iter, Nx))
+    for runtime in avg_runtime:
+        eff_bw = (3.0 * avg_iter * 4.0 * N) / (runtime * 10**-3) / 10**9 # runtime is in milliseconds
+        eff_bandwidth.append(eff_bw)
+
+    return N, Nx, exec_configs, avg_runtime, variance, eff_bandwidth
+
 # 
 def isDirty(data_csv: str) -> bool:
     print(data_csv)
@@ -52,49 +99,6 @@ with open(malformed_list, 'w') as dirty_data:
         if isDirty(file):
             dirty_data.write(file + '\n') # Want to record the problem size for which malfunction occurs
 
-def computeStatistics(data_csv: str) -> (int, int, list, list, list, list):
-    df = pd.read_csv(data_csv)
-    exec_configs = [] 
-    avg_runtime = []
-    variance = []
-    eff_bandwidth = []
-    # Determine the problem size associated with the DataFrame
-    # - Use string methods to obtain N, Nx from data_csv
-    parts = data_csv.split('.')[0] # get rid of 'csv' ending
-    parts = parts.split('/')
-    for part in parts: 
-        if part.startswith('N'):
-            N = int(part[1:])
-            break
-
-    other_part = data_csv.split('.')[0] # get rid of 'csv ending
-    other_part = other_part.split('_')[1]
-    Nx = int(other_part[2:])
-
-    # Determine the unique execution configurations (should be same for every dataset)
-    num_blocks = df['num_blocks'].unique()
-    num_threads_per_block = df['num_threads_per_block'].unique()
-    for blocks in num_blocks:
-        for threads_per in num_threads_per_block:
-            exec_configs.append((blocks, threads_per)) 
-    # exec_configs.append((df['num_blocks'].unique(),df['num_threads_per_block'].unique()))
-
-    # Compute the average runtime, and variance, for each of the unique execution configurations
-    for exec_config in exec_configs:
-        runtime_vals = df.loc[(df['num_blocks'] == exec_config[0]) & (df['num_threads_per_block'] == exec_config[1]), 'taukern']
-        avg_runtime.append(runtime_vals.mean())
-        variance.append(runtime_vals.var())
-
-    # print(type(runtime_vals))
-
-    # Compute the (average) effective bandwidth for each of the unique execution configurations
-    # THIS IS INCORRECT - 'np.log2(Nx)' overestimates the number of iterations it takes to find a particle on average  
-    for runtime in avg_runtime:
-        eff_bw = (3.0 * np.log2(Nx) * 4.0 * N) / (runtime * 10**-3) / 10**9 # runtime is in milliseconds
-        eff_bandwidth.append(eff_bw)
-
-    return N, Nx, exec_configs, avg_runtime, variance, eff_bandwidth
-
 # MAIN
 # kernel_data = sys.argv[1]
 # device_id = kernel_data.split('-')[0]
@@ -114,8 +118,10 @@ cleanfiles_only = [file for file in all_files if (os.path.isfile(file) and (file
 
 stat_df = pd.DataFrame(columns=['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
 
+num_iter_exe_string = './numiter'
+
 # Test computeStatistics
-(N, Nx, e_c, a_r, v, e_b) = computeStatistics(cleanfiles_only[0])
+(N, Nx, e_c, a_r, v, e_b) = computeStatistics(cleanfiles_only[0], num_iter_exe_string)
 print(str(N) + '\n')
 print(str(Nx) + '\n')
 print(e_c)
@@ -126,7 +132,7 @@ print(e_b)
 # Add computeStatistics results to statistics DataFrame
 # The below is slow
 for data_file in cleanfiles_only:
-    (N, Nx, e_c, a_r, v, e_b) = computeStatistics(data_file)
+    (N, Nx, e_c, a_r, v, e_b) = computeStatistics(data_file, num_iter_exe_string)
     for idx in range(len(e_c)): # number of datapoints based on number of unique execution configurations
         temp_df = pd.DataFrame([[N,Nx,e_c[idx][0],e_c[idx][1],a_r[idx],v[idx],e_b[idx]]],columns = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
         # stat_df = pd.concat([temp_df, stat_df])

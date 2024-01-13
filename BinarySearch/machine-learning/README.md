@@ -21,7 +21,12 @@ binarytree.c/
 
 numiterations.c/
 - Use 'binarytree.c' to calculate correct value for 'avg_iters' to put into effective bandwidth formula
+    - Assumes uniformly-initialized particles, they were actually randomly-initialized (uniform distribution)
 - 'gcc -std=c99 numiterations.c -o numiter -lm'
+
+numiterations.cu/
+- CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.
+    - Given that the population is initialized randomly, according to a uniform distribution.
 
 analyze.py
 - Script that operates on a '*-clean/' directory, and computes a number of relevant performance metrics
@@ -33,3 +38,6 @@ randomforest.py
 
 project.gv
 - Graphviz source code for visualizing the structure of the project
+
+project.png
+- Visualizes high-level structure of the project

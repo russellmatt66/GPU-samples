@@ -2,8 +2,10 @@
 #include "binarytree.c"
 #include <math.h>
 
-BTNode* buildTree();
-
+// THERE IS A SLIGHT FLAW IN THIS LOGIC
+// THE FLAW IS THAT I DID NOT UNIFORMLY INITIALIZE THE PARTICLES
+// I RANDOMLY INITIALIZED THEM (UNIFORM DISTRIBUTION)
+// The solution is to randomly select cells 'N' times, and obtain statistics. Honestly, easy enough problem, can even use CUDA for it! 
 // Logic:
 // (I)
 // Create a binary tree with the values of the nodes corresponding to the index of a grid-cell in a uniform grid, where a binary search algorithm 
@@ -48,11 +50,11 @@ void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level
     buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
 }
 
-double main(int argc, char* argv[]){
+int main(int argc, char* argv[]){
     int Nx = atoi(argv[1]); // need to be able to pass in the number of gridpoints
+    // printf("%d\n", Nx);
     int level = 1;
     double avg_iter; 
-    // printf("%d\n", Nx);
 
     // Create binary tree
     int low = 0, high = Nx-1;
@@ -60,12 +62,14 @@ double main(int argc, char* argv[]){
     BTNode* root = createBTNode(guess, level);
     buildLeaves(root, Nx, low, high, guess, level + 1);
     // printNode(root);
+    
+    // Calculate average number of iterations
     int total_iterations = 0;
     total_iterations = sumIters(root, total_iterations);
-    printf("It takes %d total iterations to find a population of particles where one is in each grid-cell\n", total_iterations);
+    // printf("It takes %d total iterations to find a population of particles where one is in each grid-cell\n", total_iterations);
     avg_iter = (double)total_iterations / Nx;
-    printf("It takes %f iterations on average to find a particle\n", avg_iter); 
+    // printf("It takes %f iterations on average to find a particle\n", avg_iter); 
     freeBT(root);
-    return avg_iter;
-    // return avg_iter;
+    printf("%f\n", avg_iter);
+    return 0;
 }

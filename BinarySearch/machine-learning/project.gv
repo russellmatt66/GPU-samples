@@ -1,5 +1,8 @@
 digraph RandomForest {
     "*-kerneldata/" -> "clean.py";
+    "binarytree.c" -> "numiterations.c";
+    "numiterations.c" -> "./numiter";
+    "./numiter" -> "clean.py";
     "clean.py" -> "*-cleandata/";
     "*-cleandata/" -> "analyze.py";
     "*-cleandata/" -> "randomforest.py"
