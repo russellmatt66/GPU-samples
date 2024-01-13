@@ -21,6 +21,7 @@ binarytree.c/
 
 numiterations.c/
 - Use 'binarytree.c' to calculate correct value for 'avg_iters' to put into effective bandwidth formula
+- 'gcc -std=c99 numiterations.c -o numiter -lm'
 
 analyze.py
 - Script that operates on a '*-clean/' directory, and computes a number of relevant performance metrics

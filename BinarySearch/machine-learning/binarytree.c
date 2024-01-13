@@ -36,6 +36,14 @@ void addNode(BTNode* parent, BTNode* newNode, char* direction){
     return;
 }
 
+int sumIters(BTNode* root, int sum){
+    if (root == NULL){
+        return 0;
+    }
+    sum = root->depth; // the level of a node corresponds to how many iterations it takes binary search to find the particle in the associated grid-cell
+    return sum + sumIters(root->left, sum) + sumIters(root->right, sum);
+}
+
 void printNode(BTNode* root){
     // Traverse tree and print the values and depths out
     if (root == NULL){

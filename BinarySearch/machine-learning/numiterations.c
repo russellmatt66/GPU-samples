@@ -48,9 +48,10 @@ void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level
     buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
 }
 
-int main(int argc, char* argv[]){
+double main(int argc, char* argv[]){
     int Nx = atoi(argv[1]); // need to be able to pass in the number of gridpoints
-    int avg_iter, level = 1; 
+    int level = 1;
+    double avg_iter; 
     // printf("%d\n", Nx);
 
     // Create binary tree
@@ -58,8 +59,13 @@ int main(int argc, char* argv[]){
     int guess = (low + high) / 2;
     BTNode* root = createBTNode(guess, level);
     buildLeaves(root, Nx, low, high, guess, level + 1);
-    printNode(root);
+    // printNode(root);
+    int total_iterations = 0;
+    total_iterations = sumIters(root, total_iterations);
+    printf("It takes %d total iterations to find a population of particles where one is in each grid-cell\n", total_iterations);
+    avg_iter = (double)total_iterations / Nx;
+    printf("It takes %f iterations on average to find a particle\n", avg_iter); 
     freeBT(root);
-    return 0;
+    return avg_iter;
     // return avg_iter;
 }
