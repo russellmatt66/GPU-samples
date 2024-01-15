@@ -4,8 +4,8 @@
 
 // Library functions for implementing Binary Tree
 typedef struct BTNode{
-    int val;
-    int depth; 
+    int val; // the cell where the search is looking 
+    int depth; // number of iterations to get here
     struct BTNode* left;
     struct BTNode* right;
 } BTNode;
