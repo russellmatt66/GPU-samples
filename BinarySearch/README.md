@@ -13,10 +13,11 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 - Analyze gtx960 kernel benchmarking data
     - Calculate correct effective bandwidth. Current implementation overestimates with avg_iters = log2(Nx).
     - Obtain correct value for avg_iters using a method based on representing the algorithm outcomes with a binary tree.
+    - numiterations.cu simulates the algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
 - Implement an ML model using sklearn in order to predict the execution configuration performance.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
 
-(2) Run kernel parameter sweep on RTX 2060
+(2) Run project on RTX 2060
 
 
 # Directory Structure

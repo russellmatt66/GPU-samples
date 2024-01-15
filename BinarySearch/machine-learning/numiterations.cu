@@ -1,9 +1,19 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <fstream>
 
 #include "binarytree.c"
 
+/*
+Code to produce binary for usage in clean.py, so that accurate values of the effective bandwidth can be determined 
+*/
+
+__device__ void getNumIterations(BTNode*, int, const int);
+
+// Function to simulate how many total iterations binary search takes to find a given population of particles 
 __global__ void simulateSearch(int* sum, const int* num_iters, const int* p_cells, const int N){
     // num_iters 
     // - integer array whose values correspond to how many iterations it takes to find a particle in that cell
@@ -25,6 +35,7 @@ __global__ void simulateSearch(int* sum, const int* num_iters, const int* p_cell
     atomicAdd(sum, partial);
 }
 
+// Build the binary tree
 void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level){
     if (parent == NULL || level > (int)log2(Nx)){
         return;
@@ -69,8 +80,24 @@ __device__ void getNumIterations(BTNode* root, int curr_num_iter, const int j){
 }
 
 
-__global__ void initializePCells(int* p_cells, const int N){
-    
+__global__ void initializePCells(int* p_cells, const int N, const int Nx){
+    int tidx = threadIdx.x + blockDim.x * blockIdx.x; 
+    int nthreads = blockDim.x * gridDim.x;
+
+    unsigned long long seed = 1234;
+
+    // Implement device random number generation with curand 
+    curandState_t state;
+    if (tidx < N){
+        curand_init(seed, tidx, 0, &state);
+    }
+
+    // Get random integer between [0,Nx-2] to represent which cell the particle is in
+    float aRandomValue = 0;
+    for (int i = tidx; i < N; i += nthreads){
+        aRandomValue = static_cast<float>(curand_uniform(&state)) * (Nx-2); 
+        p_cells[i] = (int)aRandomValue;
+    }
 }
 
 // https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
@@ -96,7 +123,7 @@ int main(int argc, char* argv[]){
     cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 
     // Create device data
-    int *num_iters, *p_cells, *total_iters;
+    int *num_iters, *p_cells, *total_iters = 0;
 
     checkCuda(cudaMallocManaged(&num_iters, (Nx-1)*sizeof(int)));
     checkCuda(cudaMallocManaged(&p_cells, N*sizeof(int)));
@@ -111,7 +138,7 @@ int main(int argc, char* argv[]){
     int level = 1;
 
     root = createBTNode(guess, level);
-    buildLeaves(root, Nx, low, high, guess, level);
+    buildLeaves(root, Nx, low, high, guess, level); // probably faster to implement a device version of this
 
     // Define execution configuration
     int num_blocks = numberOfSMs;
@@ -119,11 +146,37 @@ int main(int argc, char* argv[]){
 
     // Initialize num_iters, and p_cells
     initializeNumIters<<<num_blocks, num_threads_per_block>>>(root, num_iters, Nx-1); // There are Nx-1 cells 
-    initializePCells<<<num_blocks, num_threads_per_block>>>(p_cells, N);
+    initializePCells<<<num_blocks, num_threads_per_block>>>(p_cells, N, Nx);
     checkCuda(cudaDeviceSynchronize());
-    // Call CUDA kernels to simulate the binary search algorithm, and compute total number of iterations required  
 
-    // DO NOT DELETE, analyze.py catches this value!
-    printf("%f\n", *total_iters / N);
+    // SANITY CHECK - Check the values of num_iters and p_cells
+    std::ofstream p_cell_file, num_iter_file;
+
+    p_cell_file.open("p_cells.txt");
+    int jump = N / 16;
+    for (int i = 0; i < N; i += jump){
+        p_cell_file << "Particle " << i << " is in cell " << p_cells[i] << std::endl;
+    }
+    p_cell_file.close();
+
+    num_iter_file.open("num_iters.txt");
+    jump = Nx / 16;
+    for (int j = 0; j < Nx; j += jump){
+        num_iter_file << "It takes " << num_iters[j] << " iterations to find a particle in cell " << j << std::endl;
+    }
+    num_iter_file.close();
+
+    // Call CUDA kernels to simulate the binary search algorithm, and compute total number of iterations required  
+    simulateSearch<<<num_blocks, num_threads_per_block>>>(total_iters, num_iters, p_cells, N);
+    checkCuda(cudaDeviceSynchronize());
+
+    // DO NOT DELETE, clean.py catches this value!
+    printf("%d\n", *total_iters / N);
+
+    // Free unified memory
+    cudaFree(p_cells);
+    cudaFree(num_iters);
+    cudaFree(root);
+    cudaFree(total_iters);
     return 0;
 }
