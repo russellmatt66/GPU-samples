@@ -50,8 +50,8 @@ def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list
     # print(type(runtime_vals))
 
     # Compute the (average) effective bandwidth for each of the unique execution configurations
-    # THIS IS INCORRECT - 'np.log2(Nx)' overestimates the number of iterations it takes to find a particle on average  
-    result = subprocess.check_output([num_iter_exe, str(Nx)], text=True)
+    # 'num_iter_exe' simulates the binary search on the population of particles and calculates the number of iterations required to find all of them
+    result = subprocess.check_output([num_iter_exe, str(N), str(Nx)], text=True)
     avg_iter = float(result.strip())
     print("{} iterations needed on average for binary search to find a particle for {} gridpoints".format(avg_iter, Nx))
     for runtime in avg_runtime:
@@ -118,6 +118,7 @@ cleanfiles_only = [file for file in all_files if (os.path.isfile(file) and (file
 
 stat_df = pd.DataFrame(columns=['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
 
+# 'num_iter_exe' simulates the binary search on the population of particles and calculates the number of iterations required to find all of them
 num_iter_exe_string = './numiter'
 
 # Test computeStatistics
