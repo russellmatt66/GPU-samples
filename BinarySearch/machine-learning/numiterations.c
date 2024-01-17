@@ -1,5 +1,5 @@
 // Code to calculate the number of iterations that it takes to find a particle on average using a binary tree
-#include "binarytree.c"
+#include "binarytree.h"
 #include <math.h>
 
 // THERE IS A SLIGHT FLAW IN THIS LOGIC
@@ -31,6 +31,14 @@
 // inside the grid-cell identified by BTNode->val. For a population of uniformly-spaced particles, the total number of iterations can be calculated 
 // by traversing the tree and summing up all the BTNode->depth values, and the average number of iterations that it takes to find a particle is then 
 // found by dividing that number by the number of grid-cells.
+
+// Why is this here twice? Because VSCode wouldn't stop crying lines of red
+typedef struct BTNode{
+    int val; // the cell where the search is looking 
+    int depth; // number of iterations to get here
+    struct BTNode* left;
+    struct BTNode* right;
+} BTNode;
 
 void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level){
     if (parent == NULL || level > (int)log2(Nx)){

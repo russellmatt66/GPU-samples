@@ -5,13 +5,66 @@
 #include <curand_kernel.h>
 #include <fstream>
 
-#include "binarytree.c"
+#include "binarytree.h"
 
 /*
 Code to produce binary for usage in clean.py, so that accurate values of the effective bandwidth can be determined 
 */
 
-__device__ void getNumIterations(BTNode*, int, const int);
+// Binary tree functionality for device 
+struct d_BTNode {
+    int cell;
+    int num_iter;
+    d_BTNode* left;
+    d_BTNode* right;
+};
+
+__device__ d_BTNode* d_createBTNode(int cell, int num_iter){
+    d_BTNode* d_newNode = (d_BTNode*)(sizeof(d_BTNode));
+    if (d_newNode != NULL){
+        d_newNode->cell = cell;
+        d_newNode->num_iter = num_iter;
+        d_newNode->left = NULL;
+        d_newNode->right = NULL;
+    }
+    return d_newNode; 
+}
+
+// Build the binary tree
+__global__ void buildLeaves(d_BTNode* parent, int Nx, int low, int high, int guess, int level){
+    if (parent == NULL || level > (int)log2(Nx)){
+        return;
+    }
+    int left_low = low; 
+    int left_high = guess;
+    int left_guess = (left_low + left_high) / 2;
+    int right_low = guess;
+    int right_high = high;
+    int right_guess = (right_low + right_high) / 2;
+    d_BTNode* leftNode = d_createBTNode(left_guess, level);
+    d_BTNode* rightNode = d_createBTNode(right_guess, level);
+    parent->left = leftNode;
+    parent->right = rightNode;
+    buildLeaves(parent->left, Nx, left_low, left_high, left_guess, level + 1);
+    buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
+}
+
+// 
+void writeBST(BTNode* root, int jump, int *counter, std::ofstream& bst_file){
+    if (root == NULL){
+        return;
+    }
+    else if ((*counter) % jump == 0){
+        bst_file << "Node " << *counter << " represents looking in cell " << root->val << ", where it would take " 
+            << root->depth << " iterations to find a particle there" << std::endl; 
+    }
+    (*counter)++;
+    writeBST(root->left, jump, counter, bst_file);
+    (*counter)++;
+    writeBST(root->right, jump, counter, bst_file);
+}
+
+__device__ void getNumIterations(d_BTNode*, int, const int);
 
 // Function to simulate how many total iterations binary search takes to find a given population of particles 
 __global__ void simulateSearch(int* sum, const int* num_iters, const int* p_cells, const int N){
@@ -35,26 +88,7 @@ __global__ void simulateSearch(int* sum, const int* num_iters, const int* p_cell
     atomicAdd(sum, partial);
 }
 
-// Build the binary tree
-void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level){
-    if (parent == NULL || level > (int)log2(Nx)){
-        return;
-    }
-    int left_low = low; 
-    int left_high = guess;
-    int left_guess = (left_low + left_high) / 2;
-    int right_low = guess;
-    int right_high = high;
-    int right_guess = (right_low + right_high) / 2;
-    BTNode* leftNode = createBTNode(left_guess, level);
-    BTNode* rightNode = createBTNode(right_guess, level);
-    parent->left = leftNode;
-    parent->right = rightNode;
-    buildLeaves(parent->left, Nx, left_low, left_high, left_guess, level + 1);
-    buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
-}
-
-__global__ void initializeNumIters(BTNode* root, int* num_iters, const int Nxm1){
+__global__ void initializeNumIters(d_BTNode* root, int* num_iters, const int Nxm1){
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
     int nthreads = blockDim.x * gridDim.x;
 
@@ -63,10 +97,10 @@ __global__ void initializeNumIters(BTNode* root, int* num_iters, const int Nxm1)
     }
 }
 
-__device__ void getNumIterations(BTNode* root, int curr_num_iter, const int j){
+__device__ void getNumIterations(d_BTNode* root, int curr_num_iter, const int j){
     // Depth-first search 
-    if (root->val == j){
-        curr_num_iter = root->depth;
+    if (root->cell == j){
+        curr_num_iter = root->num_iter;
         return;
     }
 
@@ -130,15 +164,20 @@ int main(int argc, char* argv[]){
     checkCuda(cudaMallocManaged(&total_iters, sizeof(int)));
 
     // Create binary tree with Nx nodes, representing binary search outcomes
-    BTNode* root;
-    checkCuda(cudaMallocManaged(&root, Nx*sizeof(BTNode)));
-
     int low = 0, high = Nx-1;
     int guess = (low + high) / 2;
     int level = 1;
-
-    root = createBTNode(guess, level);
+    BTNode* root = createBTNode(guess, level);
     buildLeaves(root, Nx, low, high, guess, level); // probably faster to implement a device version of this
+
+    std::ofstream bst_file; 
+    bst_file.open("bst.txt");
+    int *counter = 0;
+    int jump = Nx / 16;
+    writeBST(root, jump, counter, bst_file);
+    bst_file.close();
+
+
 
     // Define execution configuration
     int num_blocks = numberOfSMs;
@@ -149,11 +188,11 @@ int main(int argc, char* argv[]){
     initializePCells<<<num_blocks, num_threads_per_block>>>(p_cells, N, Nx);
     checkCuda(cudaDeviceSynchronize());
 
-    // SANITY CHECK - Check the values of num_iters and p_cells
+    // SANITY CHECK - Check the values of binary tree, num_iters, and p_cells
     std::ofstream p_cell_file, num_iter_file;
 
     p_cell_file.open("p_cells.txt");
-    int jump = N / 16;
+    jump = N / 16;
     for (int i = 0; i < N; i += jump){
         p_cell_file << "Particle " << i << " is in cell " << p_cells[i] << std::endl;
     }
@@ -166,6 +205,8 @@ int main(int argc, char* argv[]){
     }
     num_iter_file.close();
 
+
+    
     // Call CUDA kernels to simulate the binary search algorithm, and compute total number of iterations required  
     simulateSearch<<<num_blocks, num_threads_per_block>>>(total_iters, num_iters, p_cells, N);
     checkCuda(cudaDeviceSynchronize());
