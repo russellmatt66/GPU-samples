@@ -36,14 +36,45 @@ __device__ d_BTNode* d_createBTNode(int cell, int num_iter, int node){
 
 // Build the binary tree
 // Step 1: Build all the nodes
-__global__ void d_buildNodes(d_BTNode** all_nodes, int Nx){
+// Need functions to get the cell, and number of iterations
+__device__ int getCell(int i, int Nx){
+    // Base case
+    if (i == Nx-2){
+        return i;
+    }
+    return 0;
+}
+
+__device__ int getNumIter(int i, int Nx){
+    // This is an easy problem
+    return 0;
+}
+
+__global__ void buildNodes(d_BTNode** all_nodes, int Nx){
+    int tidx = threadIdx.x + blockDim.x * blockIdx.x;
+    int nthreads = blockDim.x * gridDim.x;
+
+    int cell = 0;
+    int num_iter = 0;
+    for (int i = tidx; i < Nx - 1; i += nthreads){ // number of nodes = Nx-1 = number of cells 
+        cell = getCell(i,Nx);
+        num_iter = getNumIter(i,Nx);
+        all_nodes[i] = d_createBTNode(cell, num_iter, i);
+    }
+
     return;
 }
 
 // Step 2: Connect them together
-__global__ void d_connectNodes(d_BTNode** all_nodes, int Nx){
+__global__ void connectNodes(d_BTNode** all_nodes, int Nx){
+    int tidx = threadIdx.x + blockDim.x * blockIdx.x;
+    int nthreads = blockDim.x * gridDim.x;
+    
+    // Raster through all_nodes and use num_node to 
+
     return;
 }
+
 // These parts are just for reference
 // __global__ void d_buildTree(d_BTNode* root, int Nx, int low, int high, int guess, int level){
 //     if (root == NULL || level > (int)log2(Nx)){
@@ -217,6 +248,7 @@ int main(int argc, char* argv[]){
 
     d_root->cell = guess;
     d_root->num_iter = 1;
+    d_root->num_node = 0; // 0-indexed
     d_root->left = NULL;
     d_root->right = NULL;
 
@@ -231,8 +263,10 @@ int main(int argc, char* argv[]){
     // Create bst on device
     // d_buildTree<<<num_blocks, num_threads_per_block>>>(d_root, Nx, low, high, guess, level);
     // STEP 1: BUILD ALL THE NODES
+    buildNodes<<<num_blocks, num_threads_per_block>>>(d_all_bst_nodes, Nx);
     checkCuda(cudaDeviceSynchronize());
     // STEP 2: CONNECT THEM TOGETHER
+    connectNodes<<<num_blocks, num_threads_per_block>>>(d_all_bst_nodes, Nx);
     checkCuda(cudaDeviceSynchronize());
 
     // Initialize num_iters, and p_cells
