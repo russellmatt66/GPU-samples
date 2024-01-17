@@ -45,9 +45,16 @@ __device__ int getCell(int i, int Nx){
     return 0;
 }
 
-__device__ int getNumIter(int i, int Nx){
-    // This is an easy problem
-    return 0;
+// This is a hard one to explain without showing the structure of the bst
+// Validated in 'BinarySearch/test/getNumIter.cpp'
+__device__ int getNumIter(int i){
+    int num_iter = 1;
+    int k = 0;
+    while (k < i){
+        k += pow(2, num_iter);
+        num_iter++;
+    }
+    return num_iter;
 }
 
 __global__ void buildNodes(d_BTNode** all_nodes, int Nx){
@@ -57,8 +64,8 @@ __global__ void buildNodes(d_BTNode** all_nodes, int Nx){
     int cell = 0;
     int num_iter = 0;
     for (int i = tidx; i < Nx - 1; i += nthreads){ // number of nodes = Nx-1 = number of cells 
+        num_iter = getNumIter(i);
         cell = getCell(i,Nx);
-        num_iter = getNumIter(i,Nx);
         all_nodes[i] = d_createBTNode(cell, num_iter, i);
     }
 
