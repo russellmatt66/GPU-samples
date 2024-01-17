@@ -10,7 +10,6 @@ typedef struct BTNode{
     struct BTNode* right;
 } BTNode;
 
-
 BTNode* createBTNode(int value, int depth) {
     BTNode* newNode = (BTNode*)malloc(sizeof(BTNode));
     if (newNode != NULL) { 
@@ -25,15 +24,22 @@ BTNode* createBTNode(int value, int depth) {
     return newNode;
 }
 
-// Add 'newNode' to 'parent', which connection to make depends on 'direction' 
-void addNode(BTNode* parent, BTNode* newNode, char* direction){
-    if (strcmp(direction, "left") == 0){
-        parent->left = newNode;
+void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level){
+    if (parent == NULL || level > (int)log2(Nx)){
+        return;
     }
-    else if (strcmp(direction, "right") == 0){
-        parent->left = newNode;
-    }
-    return;
+    int left_low = low; 
+    int left_high = guess;
+    int left_guess = (left_low + left_high) / 2;
+    int right_low = guess;
+    int right_high = high;
+    int right_guess = (right_low + right_high) / 2;
+    BTNode* leftNode = createBTNode(left_guess, level);
+    BTNode* rightNode = createBTNode(right_guess, level);
+    parent->left = leftNode;
+    parent->right = rightNode;
+    buildLeaves(parent->left, Nx, left_low, left_high, left_guess, level + 1);
+    buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
 }
 
 int sumIters(BTNode* root, int sum){

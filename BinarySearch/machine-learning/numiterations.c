@@ -32,32 +32,6 @@
 // by traversing the tree and summing up all the BTNode->depth values, and the average number of iterations that it takes to find a particle is then 
 // found by dividing that number by the number of grid-cells.
 
-// Why is this here twice? Because VSCode wouldn't stop crying lines of red
-typedef struct BTNode{
-    int val; // the cell where the search is looking 
-    int depth; // number of iterations to get here
-    struct BTNode* left;
-    struct BTNode* right;
-} BTNode;
-
-void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level){
-    if (parent == NULL || level > (int)log2(Nx)){
-        return;
-    }
-    int left_low = low; 
-    int left_high = guess;
-    int left_guess = (left_low + left_high) / 2;
-    int right_low = guess;
-    int right_high = high;
-    int right_guess = (right_low + right_high) / 2;
-    BTNode* leftNode = createBTNode(left_guess, level);
-    BTNode* rightNode = createBTNode(right_guess, level);
-    parent->left = leftNode;
-    parent->right = rightNode;
-    buildLeaves(parent->left, Nx, left_low, left_high, left_guess, level + 1);
-    buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
-}
-
 int main(int argc, char* argv[]){
     int Nx = atoi(argv[1]); // need to be able to pass in the number of gridpoints
     // printf("%d\n", Nx);
