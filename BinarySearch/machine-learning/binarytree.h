@@ -1,20 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 // Library functions for implementing Binary Tree
 typedef struct BTNode{
-    int val; // the cell where the search is looking 
-    int depth; // number of iterations to get here
+    int cell; // the cell where the search is looking 
+    int num_iter; // number of iterations to get here
     struct BTNode* left;
     struct BTNode* right;
 } BTNode;
 
-BTNode* createBTNode(int value, int depth) {
+BTNode* createBTNode(int cell, int num_iter) {
     BTNode* newNode = (BTNode*)malloc(sizeof(BTNode));
     if (newNode != NULL) { 
-        newNode->val = value;
-        newNode->depth = depth;
+        newNode->cell = cell;
+        newNode->num_iter = num_iter;
         newNode->left = NULL;
         newNode->right = NULL;
     } else {
@@ -42,12 +43,25 @@ void buildLeaves(BTNode* parent, int Nx, int low, int high, int guess, int level
     buildLeaves(parent->right, Nx, right_low, right_high, right_guess, level + 1);
 }
 
+// What even is the point of this function
 int sumIters(BTNode* root, int sum){
     if (root == NULL){
         return 0;
     }
-    sum = root->depth; // the level of a node corresponds to how many iterations it takes binary search to find the particle in the associated grid-cell
+    sum = root->num_iter; // the level of a node corresponds to how many iterations it takes binary search to find the particle in the associated grid-cell
     return sum + sumIters(root->left, sum) + sumIters(root->right, sum);
+}
+
+void getCells(BTNode* root, int* cells, int* num_node){
+    if (root == NULL){
+        return;
+    }
+    printf("%d\n", *num_node);
+    cells[*num_node] = root->num_iter;
+    (*num_node)++;
+    getCells(root->left, cells, num_node);
+    getCells(root->right, cells, num_node);
+    return;
 }
 
 void printNode(BTNode* root){
@@ -55,7 +69,7 @@ void printNode(BTNode* root){
     if (root == NULL){
         return;
     }
-    printf("Algorithm finds particle in grid-cell %d, in %d iterations\n", root->val, root->depth);
+    printf("Algorithm finds particle in grid-cell %d, in %d iterations\n", root->cell, root->num_iter);
     printNode(root->left);
     printNode(root->right);
 }

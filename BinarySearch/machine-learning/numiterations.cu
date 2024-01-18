@@ -9,7 +9,14 @@
 #include "binarytree.h"
 
 /*
+SUMMARY:
 Code to produce binary for usage in clean.py, so that accurate values of the effective bandwidth can be determined 
+*/
+
+/*
+STATUS:
+Stuck on writing 'getCell()' - function calculates the grid-cell that node i represents looking in
+Giving up on this, it's taking too much time
 */
 
 // Binary tree functionality for device 
@@ -52,7 +59,7 @@ __device__ int getNumIter(int i){
 
 // With these, it is possible to write 'getCell()' and 'connectNodes()'
 __device__ int getLeftChildInd(int i, int num_iter, int Nx){
-    if (num_iter >= log2(Nx)){
+    if (num_iter > log2(Nx)){
         return -2;
     }
     return i + pow(2, num_iter - 1);
@@ -62,35 +69,26 @@ __device__ int getRightChildInd(int i, int num_iter, int Nx){
     return getLeftChildInd(i, num_iter, Nx) + 1;
 }
 
-__device__ int getCell(int i, int Nx, int num_iter){
-    int low = 0, high = Nx - 1;
+// I don't know how to write this function
+// Don't be fooled, this doesn't work correctly
+__device__ int getCell(int i, int Nx, int num_iter, int k, int low, int high){
+    // Calculate the grid-cell that is associated with the ith node
     int guess = (low + high) / 2;
-    int left_low = low, left_high = guess;
-    int left_guess = (left_low + left_high) / 2;
-    int right_low = guess, right_high = high;
-    int right_guess = (right_low + right_high) / 2;
-    int t = 1, k = 0;
-    int k_l = getLeftChildInd(k, t, Nx);
-    int k_r = getRightChildInd(k, t, Nx);
-    while (t < num_iter){ // look through left subtree
-        k = k_l;
-        if (i == k_l){
-            return left_guess;
-        }
-        else if (i == k_r){
-            return right_guess;
-        }
-        t++;
-        k_l = getLeftChildInd(k, t, Nx);
-        k_r = getRightChildInd(k, t, Nx);
-
+    if (i == k){
+        return guess;
     }
-    t = 1;
-    k = 0;
-    k_l = getLeftChildInd(k, t, Nx);
-    k_r = getRightChildInd(k, t, Nx);
-    while (t < num_iter){ // look through right subtree
-        k = k_r;
+    else if (k == -1 || k == -2){
+        return -1;
+    }
+    int left_high = guess;
+    int right_low = guess;
+    int left_guess = getCell(i, Nx, num_iter, getLeftChildInd(k, num_iter, Nx), low, left_high);
+    int right_guess = getCell(i, Nx, num_iter, getRightChildInd(k, num_iter, Nx), right_low, high);
+    if (left_guess != -1){
+        guess = left_guess;
+    }
+    else if (right_guess != -1){
+        guess = right_guess;
     }
     return guess;
 }
@@ -101,10 +99,10 @@ __global__ void buildNodes(d_BTNode** all_nodes, int Nx){
 
     int cell = 0;
     int num_iter = 0;
-    int low = 0, high = Nx - 1;
+    int low = 0, high = Nx - 1, k = 0;
     for (int i = tidx; i < Nx - 1; i += nthreads){ // number of nodes = Nx-1 = number of cells 
         num_iter = getNumIter(i);
-        cell = getCell(i, Nx, num_iter);
+        cell = getCell(i, Nx, num_iter, k, low, high); // I don't know how to write this
         all_nodes[i] = d_createBTNode(cell, num_iter, i);
     }
 
@@ -116,12 +114,13 @@ __global__ void connectNodes(d_BTNode** all_nodes, int Nx){
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
     int nthreads = blockDim.x * gridDim.x;
     
-    // Raster through all_nodes and use num_node to 
+    // Raster through all_nodes 
+    // Use num_node along with getLeftChildInd(), and getRightChildInd() to connect the BST together
 
     return;
 }
 
-// These parts are just for reference
+// These parts are just for reference - delete asap
 // __global__ void d_buildTree(d_BTNode* root, int Nx, int low, int high, int guess, int level){
 //     if (root == NULL || level > (int)log2(Nx)){
 //         return;
@@ -267,7 +266,6 @@ int main(int argc, char* argv[]){
 
     // Create device data
     int *num_iters, *p_cells, *total_iters = 0;
-
 
     checkCuda(cudaMallocManaged(&num_iters, (Nx-1)*sizeof(int)));
     checkCuda(cudaMallocManaged(&p_cells, N*sizeof(int)));

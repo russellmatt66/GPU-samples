@@ -1,6 +1,8 @@
 // Code to calculate the number of iterations that it takes to find a particle on average using a binary tree
 #include "binarytree.h"
 #include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
 // THERE IS A SLIGHT FLAW IN THIS LOGIC
 // THE FLAW IS THAT I DID NOT UNIFORMLY INITIALIZE THE PARTICLES
@@ -34,6 +36,8 @@
 
 int main(int argc, char* argv[]){
     int Nx = atoi(argv[1]); // need to be able to pass in the number of gridpoints
+    int N = atoi(argv[2]); // need to know how many particles
+
     // printf("%d\n", Nx);
     int level = 1;
     double avg_iter; 
@@ -47,11 +51,36 @@ int main(int argc, char* argv[]){
     
     // Calculate average number of iterations
     int total_iterations = 0;
-    total_iterations = sumIters(root, total_iterations);
-    // printf("It takes %d total iterations to find a population of particles where one is in each grid-cell\n", total_iterations);
-    avg_iter = (double)total_iterations / Nx;
+
+    int *p_cells, *cells, *num_node;
+    
+    p_cells = (int*)malloc(N*sizeof(int));
+    cells = (int*)malloc((Nx-1)*sizeof(int));
+    num_node = (int*)malloc(sizeof(int));
+
+    *num_node = 0;
+    
+    getCells(root, cells, num_node); // Initializes cells
+
+    srand(time(NULL));
+    int cell = rand() % (Nx - 1);
+    
+    for (int i = 0; i < N; i++){
+        p_cells[i] = cell;
+        cell = rand() % (Nx - 1);
+        total_iterations += cells[p_cells[i]];
+    }
+
+    printf("%d\n", total_iterations);
+
+    avg_iter = (double)total_iterations / N;
     // printf("It takes %f iterations on average to find a particle\n", avg_iter); 
+
     freeBT(root);
+    free(p_cells);
+    free(cells);
+    free(num_node);
+    
     printf("%f\n", avg_iter);
     return 0;
 }

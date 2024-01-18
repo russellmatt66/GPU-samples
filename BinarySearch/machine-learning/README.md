@@ -25,10 +25,11 @@ numiterations.c/
 - 'gcc -std=c99 numiterations.c -o numiter -lm'
 
 numiterations.cu/
-- CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.
+- Cannot figure out how to write 'getCell()'
+- Attempt at writing a CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.
     - Given that the population is initialized randomly, according to a uniform distribution.
 - 'nvcc numiterations.cu -o numiter'
-- Currently debugging the initialization of 'p_cells' and 'num_iters'
+
 
 analyze.py
 - Script that operates on a '*-clean/' directory, and computes a number of relevant performance metrics
