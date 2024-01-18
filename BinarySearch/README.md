@@ -14,6 +14,8 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 - Analyze gtx960 kernel benchmarking data
     - `./numiter` simulates the algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
     - Obtain CPU execution statistics and compare speedup
+        - Validated `binarysearch.c`
+            - Remove validation code, and wrap python + bash around it to automate benchmarking
 - Implement an ML model using sklearn in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
 
