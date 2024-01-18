@@ -56,7 +56,7 @@ void getCells(BTNode* root, int* cells, int* num_node){
     if (root == NULL){
         return;
     }
-    printf("%d\n", *num_node);
+    // printf("%d\n", *num_node);
     cells[*num_node] = root->num_iter;
     (*num_node)++;
     getCells(root->left, cells, num_node);

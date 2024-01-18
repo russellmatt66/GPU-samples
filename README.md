@@ -4,9 +4,8 @@ BinarySearch/ (WIP)
 - GPU: GeForce GTX 960 (Maxwell 5.2) 
 - Current tasks:
     - Analyze gtx960-cleandata/cleandata.csv
-        - Using CUDA to obtain accurate values for average number of iterations
+        - Obtain CPU execution statistics in order to compute speedup
     - Build, train, and deploy models to predict performance of "dirty" problem sizes
-    - Calculate the correct effective bandwidth values using binary tree (method described in the project sub-folder)
 
 InnerProduct/ (FIN)
 - CUDA implementation of inner product

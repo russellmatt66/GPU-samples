@@ -13,31 +13,30 @@ gtx960-cleandata/
 - Contains .txt listing all the dirty datasets
 
 clean.py
-- Script that operates on a '*-kerneldata/' folder which contains datasets from a benchmarking run on a GPU 
-- Produces a directory, '*-clean/', which contains the clean datasets, and a list of the malformed ones
+- Script that operates on a `*-kerneldata/` folder which contains datasets from a benchmarking run on a GPU
+- Produces a directory, `*-clean/`, which contains the clean datasets, and a list of the malformed ones
+
+analyze.py
+- Script that operates on a `*-clean/` directory, and computes a number of relevant performance metrics
+- Also visualizes the performance landscapes of the various problems
+
+randomforest.py
+- Code that builds, trains, and deploys ML models on datasets from a `*-clean/` directory.
+- Purpose of the models, which are based on the Random Forest architecture, is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
 
 binarytree.c/
 - Library functions for instantiating a binary tree
 
 numiterations.c/
-- Use 'binarytree.c' to calculate correct value for 'avg_iters' to put into effective bandwidth formula
+- Use `binarytree.c` to calculate correct value for 'avg_iters' to put into effective bandwidth formula
     - Assumes uniformly-initialized particles, they were actually randomly-initialized (uniform distribution)
-- 'gcc -std=c99 numiterations.c -o numiter -lm'
+- `$ gcc -std=c99 numiterations.c -o numiter -lm`
 
 numiterations.cu/
-- Cannot figure out how to write 'getCell()'
 - Attempt at writing a CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.
     - Given that the population is initialized randomly, according to a uniform distribution.
-- 'nvcc numiterations.cu -o numiter'
-
-
-analyze.py
-- Script that operates on a '*-clean/' directory, and computes a number of relevant performance metrics
-- Also visualizes the performance landscapes of the various problems
-
-randomforest.py
-- Code that builds, trains, and deploys ML models on datasets from a '*-clean/' directory.
-- Purpose of the models, which are based on the Random Forest architecture, is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
+- Cannot figure out how to write `getCell()`
+- `$ nvcc numiterations.cu -o numiter` (don't compile)
 
 project.gv
 - Graphviz source code for visualizing the structure of the project

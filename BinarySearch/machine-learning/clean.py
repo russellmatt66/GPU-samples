@@ -51,9 +51,9 @@ def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list
 
     # Compute the (average) effective bandwidth for each of the unique execution configurations
     # 'num_iter_exe' simulates the binary search on the population of particles and calculates the number of iterations required to find all of them
-    result = subprocess.check_output([num_iter_exe, str(N), str(Nx)], text=True)
+    result = subprocess.check_output([num_iter_exe, str(Nx), str(N)], text=True)
     avg_iter = float(result.strip())
-    print("{} iterations needed on average for binary search to find a particle for {} gridpoints".format(avg_iter, Nx))
+    print("{} iterations needed on average for binary search to find a particle for {} gridpoints, and {} particles".format(avg_iter, Nx, N))
     for runtime in avg_runtime:
         eff_bw = (3.0 * avg_iter * 4.0 * N) / (runtime * 10**-3) / 10**9 # runtime is in milliseconds
         eff_bandwidth.append(eff_bw)
@@ -91,7 +91,7 @@ except Exception as e:
 all_files = glob.glob(os.path.join(kernel_data, '**', '*'), recursive=True)
 
 # Filter out directories, leaving only files
-files_only = [file for file in all_files if (os.path.isfile(file) and (file != kernel_data + '/README.md'))]
+files_only = [file for file in all_files if (os.path.isfile(file) and (file != kernel_data + 'README.md'))]
 
 malformed_list = clean_dir + 'dirty.txt'
 with open(malformed_list, 'w') as dirty_data:
@@ -114,7 +114,7 @@ with open(device_id + '-cleandata/dirty.txt', 'r') as dirty:
 
 print(dirty_files)
 
-cleanfiles_only = [file for file in all_files if (os.path.isfile(file) and (file != kernel_data + '/README.md')) and (file not in dirty_files)]
+cleanfiles_only = [file for file in all_files if (os.path.isfile(file) and (file != kernel_data + 'README.md')) and (file not in dirty_files)]
 
 stat_df = pd.DataFrame(columns=['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
 

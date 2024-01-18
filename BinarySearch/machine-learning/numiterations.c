@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
         total_iterations += cells[p_cells[i]];
     }
 
-    printf("%d\n", total_iterations);
+    // printf("%d\n", total_iterations);
 
     avg_iter = (double)total_iterations / N;
     // printf("It takes %f iterations on average to find a particle\n", avg_iter); 
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
     free(p_cells);
     free(cells);
     free(num_node);
-    
+
     printf("%f\n", avg_iter);
     return 0;
 }
