@@ -37,13 +37,6 @@ __device__ d_BTNode* d_createBTNode(int cell, int num_iter, int node){
 // Build the binary tree
 // Step 1: Build all the nodes
 // Need functions to get the cell, and number of iterations
-__device__ int getCell(int i, int Nx){
-    // Base case
-    if (i == Nx-2){
-        return i;
-    }
-    return 0;
-}
 
 // This is a hard one to explain without showing the structure of the bst
 // Validated in 'BinarySearch/test/getNumIter.cpp'
@@ -57,15 +50,61 @@ __device__ int getNumIter(int i){
     return num_iter;
 }
 
+// With these, it is possible to write 'getCell()' and 'connectNodes()'
+__device__ int getLeftChildInd(int i, int num_iter, int Nx){
+    if (num_iter >= log2(Nx)){
+        return -2;
+    }
+    return i + pow(2, num_iter - 1);
+}
+
+__device__ int getRightChildInd(int i, int num_iter, int Nx){
+    return getLeftChildInd(i, num_iter, Nx) + 1;
+}
+
+__device__ int getCell(int i, int Nx, int num_iter){
+    int low = 0, high = Nx - 1;
+    int guess = (low + high) / 2;
+    int left_low = low, left_high = guess;
+    int left_guess = (left_low + left_high) / 2;
+    int right_low = guess, right_high = high;
+    int right_guess = (right_low + right_high) / 2;
+    int t = 1, k = 0;
+    int k_l = getLeftChildInd(k, t, Nx);
+    int k_r = getRightChildInd(k, t, Nx);
+    while (t < num_iter){ // look through left subtree
+        k = k_l;
+        if (i == k_l){
+            return left_guess;
+        }
+        else if (i == k_r){
+            return right_guess;
+        }
+        t++;
+        k_l = getLeftChildInd(k, t, Nx);
+        k_r = getRightChildInd(k, t, Nx);
+
+    }
+    t = 1;
+    k = 0;
+    k_l = getLeftChildInd(k, t, Nx);
+    k_r = getRightChildInd(k, t, Nx);
+    while (t < num_iter){ // look through right subtree
+        k = k_r;
+    }
+    return guess;
+}
+
 __global__ void buildNodes(d_BTNode** all_nodes, int Nx){
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
     int nthreads = blockDim.x * gridDim.x;
 
     int cell = 0;
     int num_iter = 0;
+    int low = 0, high = Nx - 1;
     for (int i = tidx; i < Nx - 1; i += nthreads){ // number of nodes = Nx-1 = number of cells 
         num_iter = getNumIter(i);
-        cell = getCell(i,Nx);
+        cell = getCell(i, Nx, num_iter);
         all_nodes[i] = d_createBTNode(cell, num_iter, i);
     }
 
