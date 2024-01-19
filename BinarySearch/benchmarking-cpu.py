@@ -57,6 +57,7 @@ for problem_size in problem_sizes:
 num_runs = int(sys.argv[3])
 
 if len(sys.argv) == 4: # starting fresh
+    print("Starting fresh")
     for problem_size in problem_sizes:
         (N, Nx) = problem_size
         data_folder = benchmarking_path + "N" + str(N) + "/" + "N" + str(N) + "_Nx" + str(Nx) + "/"
@@ -78,16 +79,29 @@ if len(sys.argv) == 5: # Error occurred and benchmarking needs to restart from a
         for Nx in Nx_sizes:
             problem_sizes_error.append((N,Nx))
 
+# print(N_sizes_error)
+# print(Nx_sizes_error)
+# print(problem_sizes_error)
+
+# print(len(sys.argv))
+# print(Nx_error)
+# print(N_error)
+
+# N_error_exp = int(math.log2(int(N_error)))
+
 if len(sys.argv) == 5: # separate processing the state of the error from restarting the benchmarking 
     # Complete work starting from problem that had error
     for Nx in Nx_sizes_error:
         if (Nx == int(Nx_error)):
+            print("Restarting from where error occurred in {}".format(error_string))
             # print("Calling `./benchmarking-cpu.sh` with N = {}, Nx = {}, init_run = {}, num_runs = {}".format(N_error, Nx, nrun_error, num_runs))
-            subprocess.run(["./benchmarking-cpu.sh", N_error, Nx_error, nrun_error, str(num_runs), data_folder])
+            data_folder = benchmarking_path + "N" + str(N_error) + "/" + "N" + str(N_error) + "_Nx" + str(Nx) + "/"
+            subprocess.run(["./benchmarking-cpu.sh", str(N_error), str(Nx), nrun_error, str(num_runs), data_folder])
         else:
             # print("Calling `./benchmarking-cpu.sh` with N = {}, Nx = {}, init_run = {}, num_runs = {}".format(N_error, Nx, 1, num_runs))
-            subprocess.run(["./benchmarking-cpu.sh", N_error, str(Nx), str(1), str(num_runs), data_folder])
-    # Complete rest of work
+            data_folder = benchmarking_path + "N" + str(N_error) + "/" + "N" + str(N_error) + "_Nx" + str(Nx) + "/"
+            subprocess.run(["./benchmarking-cpu.sh", str(N_error), str(Nx), str(1), str(num_runs), data_folder])
+     # Complete rest of work
     for problem_size in problem_sizes_error:
         (N, Nx) = problem_size
         data_folder = benchmarking_path + "N" + str(N) + "/" + "N" + str(N) + "_Nx" + str(Nx) + "/"
