@@ -3,15 +3,12 @@
 
 N="$1" # number of particles is log2(N)
 Nx="$2" # number of gridpoints is log2(Nx)
-num_runs="$3" # number of times to run perf stat
-data_folder="$4" # where to send the output to
+init_run="$3" # necessary for being able to restart at a given point due to error
+num_runs="$4" # number of times to run perf stat
+data_folder="$5" # where to send the output to
 
-# for ((ni = 10; ni <= $max_N; ni++)); do
-#     for ((nx = 10; nx <= $max_Nx; nx++)); do
-        for ((nrun = 1; nrun <= num_runs; nrun++)); do
-            data_file="$(echo "$data_folder run $nrun .txt" | tr -d ' ')"
-            echo $data_file
-            perf stat -o $data_file ./cpu-bs N Nx 
-        done
-#     done
-# done
+for ((nrun = $init_run; nrun <= $num_runs; nrun++)); do
+    data_file="$(echo "$data_folder run $nrun .txt" | tr -d ' ')"
+    echo $data_file
+    perf stat -o $data_file ./cpu-bs $N $Nx 
+done

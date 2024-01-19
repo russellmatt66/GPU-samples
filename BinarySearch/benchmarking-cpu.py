@@ -1,6 +1,7 @@
 import sys
 import os
 import subprocess
+import math
 
 # Create benchmarking directory and data folders
 benchmarking_path = "./machine-learning/benchmarking-cpu/"
@@ -55,7 +56,37 @@ for problem_size in problem_sizes:
 # Run bash script that executes `perf stat ./cpu-bs N Nx` an adequate number of times for each of the possible problem sizes 
 num_runs = int(sys.argv[3])
 
-for problem_size in problem_sizes:
-    (N, Nx) = problem_size
-    data_folder = benchmarking_path + "N" + str(N) + "/" + "N" + str(N) + "_Nx" + str(Nx) + "/"
-    subprocess.run(["./benchmarking-cpu.sh", str(N), str(Nx), str(num_runs), data_folder])
+if len(sys.argv) == 4: # starting fresh
+    for problem_size in problem_sizes:
+        (N, Nx) = problem_size
+        data_folder = benchmarking_path + "N" + str(N) + "/" + "N" + str(N) + "_Nx" + str(Nx) + "/"
+        subprocess.run(["./benchmarking-cpu.sh", str(N), str(Nx), str(1), str(num_runs), data_folder])
+
+# Process error state using string, e.g., 
+# `./machine-learning/benchmarking-cpu/N4194304/N4194304_Nx65536/run16.txt`
+if len(sys.argv) == 5: # Error occurred and benchmarking needs to restart from a specific place
+    error_string = sys.argv[4]
+    error_string = error_string.split('.txt')[0]  
+    nrun_error = error_string.split('run')[1]
+    N_error = error_string.split('/N')[1]
+    Nx_error = error_string.split('_Nx')[1]
+    Nx_error = Nx_error.split('/')[0]
+    Nx_sizes_error = [2**j for j in range(int(math.log2(int(Nx_error))), Nx_max + 1)]
+    N_sizes_error = [2**i for i in range(int(math.log2(int(N_error))) + 1, N_max + 1)]
+    problem_sizes_error = []
+    for N in N_sizes_error:
+        for Nx in Nx_sizes:
+            problem_sizes_error.append((N,Nx))
+
+if len(sys.argv) == 5: # separate processing the state of the error from restarting the benchmarking 
+    # Complete work starting from problem that had error
+    for Nx in Nx_sizes_error:
+        if (Nx == int(Nx_error)):
+            print("Calling `./benchmarking-cpu.sh` with N = {}, Nx = {}, init_run = {}, num_runs = {}".format(N_error, Nx, nrun_error, num_runs))
+        else:
+            print("Calling `./benchmarking-cpu.sh` with N = {}, Nx = {}, init_run = {}, num_runs = {}".format(N_error, Nx, 1, num_runs))
+    # Complete rest of work
+    for problem_size in problem_sizes_error:
+        (N, Nx) = problem_size
+        data_folder = benchmarking_path + "N" + str(N) + "/" + "N" + str(N) + "_Nx" + str(Nx) + "/"
+        print("Calling `./benchmarking-cpu.sh` with N = {}, Nx = {}, init_run = {}, num_runs = {}".format(N, Nx, 1, num_runs))
