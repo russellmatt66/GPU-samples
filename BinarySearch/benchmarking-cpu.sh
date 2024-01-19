@@ -11,7 +11,7 @@ data_folder="$4" # where to send the output to
         for ((nrun = 1; nrun <= num_runs; nrun++)); do
             data_file="$(echo "$data_folder run $nrun .txt" | tr -d ' ')"
             echo $data_file
-            perf stat -o $data_file ./cpu-bs N Nx 
+            perf stat -o $data_file ./cpu-bs $N $Nx 
         done
 #     done
 # done

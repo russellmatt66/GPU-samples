@@ -27,6 +27,10 @@ import sys
 # (4a) For each given problem size, which execution configuration was the fastest?
 #
 # (4b) For each given problem size, which execution configuration achieved the highest (average) effective bandwidth?
+#
+# (5) For each given problem size, what was the average speedup compared to the CPU?
+# 
+# (6) What are the confidence intervals associated with each of the effective bandwidths? 
 
 # Visualization targets:
 # (1) What does the performance landscape look like for a given problem size? 
