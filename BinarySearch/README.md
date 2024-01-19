@@ -14,9 +14,9 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 - Analyze gtx960 kernel benchmarking data
     - `./numiter` simulates the algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
     - Obtain CPU execution statistics and compare speedup
-        - Validated `binarysearch.c`
-            - Remove validation code, and wrap python + bash around it to automate benchmarking
-- Implement an ML model using sklearn in order to predict the execution configuration performance for corrupt data.
+        - Created bash script for automating the benchmarking + Python wrapper around it
+        - Next step is to get all the data, and then write Python for parsing the `perf stat` output into a `.csv` containing runtime 
+- Implement an ML model using `sklearn` in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
 
 (2) Run project on RTX 2060
@@ -29,16 +29,26 @@ binarysearch.cu
 - `$nvcc -o benchmark binarysearch.cu`
 
 binarysearch.c
-- CPU code to run binary search on a population of random particles
+- CPU code to run binary search on a population of randomly-distributed particles
 - `$ gcc binarysearch.c -o cpu-bs`
 - `$ ./cpu-bs N Nx`
+
+cpu-bs
+- Binary executable for the CPU binary search program
 
 automate-benchmarking.sh
 - Shell script that automates the benchmarking of the binary search CUDA kernel
 - Need to run `find ./benchmarking-data/ -type f ! -name 'README.md' -exec rm -rf {} +` beforehand to delete everything 
 
+benchmarking-cpu.sh
+- Shell script that automates the benchmarking of the CPU binary search program in concert with `benchmarking-cpu.py`
+
+benchmarking-cpu.py
+- Python that wraps around `benchmarking-cpu.sh`
+- Creates the data folder for every possible problem size 
+
 benchmarking-data/
-- Storage for benchmarking data
+- Storage for GPU benchmarking data
 
 machine-learning/
 - Contains Python code to analyze the performance data and predict the performance as a function of execution configuration 

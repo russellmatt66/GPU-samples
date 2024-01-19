@@ -115,18 +115,18 @@ int main(int argc, char* argv[]){
     }
 
 
-    linearSearch(grid, particles, found_linear, N, Nx);
-    bool foundSame = true;
-    for (int i = 0; i < N; i++){ // why do this seperately? Doesn't really matter, gonna get commented out in production
-        if (found[i] != found_linear[i]){
-            foundSame = false;
-            break;
-        }
-    }
+    // linearSearch(grid, particles, found_linear, N, Nx);
+    // bool foundSame = true;
+    // for (int i = 0; i < N; i++){ // why do this seperately? Doesn't really matter, gonna get commented out in production
+    //     if (found[i] != found_linear[i]){
+    //         foundSame = false;
+    //         break;
+    //     }
+    // }
 
-    // Validate data via printing - only really works for small problems, I know
-    printData(grid, particles, found, N, Nx);
-    printf("Did searches find the same? %d\n", foundSame);
+    // // Validate data via printing - only really works for small problems, I know
+    // printData(grid, particles, found, N, Nx);
+    // printf("Did searches find the same? %d\n", foundSame);
 
     free(particles);
     free(grid);

@@ -12,6 +12,12 @@ gtx960-cleandata/
 - Contains .csv containing statistics for all the clean datasets
 - Contains .txt listing all the dirty datasets
 
+benchmarking-cpu/
+- Storage for CPU benchmarking data
+
+parse-cpu.py
+- Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
+
 clean.py
 - Script that operates on a `*-kerneldata/` folder which contains datasets from a benchmarking run on a GPU
 - Produces a directory, `*-clean/`, which contains the clean datasets, and a list of the malformed ones
