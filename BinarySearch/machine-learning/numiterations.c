@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 // THERE IS A SLIGHT FLAW IN THIS LOGIC
 // THE FLAW IS THAT I DID NOT UNIFORMLY INITIALIZE THE PARTICLES

@@ -94,9 +94,10 @@ int main(int argc, char* argv[]){
     particles = (double*)malloc(N*sizeof(double));
     grid = (double*)malloc(Nx*sizeof(double));
 
-    int *found, *found_linear;
+    int *found;
     found = (int*)malloc(N*sizeof(int));
-    found_linear = (int*)malloc(N*sizeof(int));
+    // int *found_linear;
+    // found_linear = (int*)malloc(N*sizeof(int));
 
     // Initialize grid: uniform, cartesian
     double x_min = -M_PI;
@@ -114,7 +115,6 @@ int main(int argc, char* argv[]){
         found[i] = binarySearch(particles, grid, i, N, Nx);
     }
 
-
     // linearSearch(grid, particles, found_linear, N, Nx);
     // bool foundSame = true;
     // for (int i = 0; i < N; i++){ // why do this seperately? Doesn't really matter, gonna get commented out in production
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
     free(particles);
     free(grid);
     free(found);
-    free(found_linear);
+    // free(found_linear);
 
     return 0;
 }

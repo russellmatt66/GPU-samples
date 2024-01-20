@@ -1,20 +1,20 @@
-# started on Thu Jan 18 23:33:58 2024
+# started on Fri Jan 19 20:09:30 2024
 
 
  Performance counter stats for './cpu-bs 2048 16777216':
 
-            110.16 msec task-clock                #    0.995 CPUs utilized          
-                 4      context-switches          #   36.312 /sec                   
-                 0      cpu-migrations            #    0.000 /sec                   
-            32,835      page-faults               #  298.078 K/sec                  
-       293,277,341      cycles                    #    2.662 GHz                    
-       374,192,372      instructions              #    1.28  insn per cycle         
-        41,118,187      branches                  #  373.274 M/sec                  
-            61,095      branch-misses             #    0.15% of all branches        
+             62.47 msec task-clock                       #    0.995 CPUs utilized             
+                 0      context-switches                 #    0.000 /sec                      
+                 0      cpu-migrations                   #    0.000 /sec                      
+            32,835      page-faults                      #  525.582 K/sec                     
+       249,294,990      cycles                           #    3.990 GHz                       
+       419,730,532      instructions                     #    1.68  insn per cycle            
+        48,043,477      branches                         #  769.021 M/sec                     
+            54,837      branch-misses                    #    0.11% of all branches           
 
-       0.110718098 seconds time elapsed
+       0.062761839 seconds time elapsed
 
-       0.061495000 seconds user
-       0.049196000 seconds sys
+       0.031403000 seconds user
+       0.031403000 seconds sys
 
 

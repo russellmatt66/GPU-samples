@@ -14,6 +14,7 @@ gtx960-cleandata/
 
 benchmarking-cpu/
 - Storage for CPU benchmarking data
+- CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz
 
 parse-cpu.py
 - Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
