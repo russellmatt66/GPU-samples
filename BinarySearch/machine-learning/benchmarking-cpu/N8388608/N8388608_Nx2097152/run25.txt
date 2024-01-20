@@ -1,20 +1,20 @@
-# started on Thu Jan 18 22:37:58 2024
+# started on Fri Jan 19 19:19:23 2024
 
 
- Performance counter stats for './cpu-bs N Nx':
+ Performance counter stats for './cpu-bs 8388608 2097152':
 
-              0.44 msec task-clock                #    0.518 CPUs utilized          
-                 0      context-switches          #    0.000 /sec                   
-                 0      cpu-migrations            #    0.000 /sec                   
-                60      page-faults               #  135.689 K/sec                  
-         1,141,206      cycles                    #    2.581 GHz                    
-           939,719      instructions              #    0.82  insn per cycle         
-           182,551      branches                  #  412.836 M/sec                  
-             5,864      branch-misses             #    3.21% of all branches        
+          6,145.41 msec task-clock                #    1.000 CPUs utilized          
+                36      context-switches          #    5.858 /sec                   
+                 5      cpu-migrations            #    0.814 /sec                   
+            28,735      page-faults               #    4.676 K/sec                  
+    16,358,663,664      cycles                    #    2.662 GHz                    
+     7,112,907,824      instructions              #    0.43  insn per cycle         
+       879,887,874      branches                  #  143.178 M/sec                  
+        93,679,619      branch-misses             #   10.65% of all branches        
 
-       0.000854269 seconds time elapsed
+       6.146907309 seconds time elapsed
 
-       0.000923000 seconds user
-       0.000000000 seconds sys
+       6.086019000 seconds user
+       0.059980000 seconds sys
 
 
