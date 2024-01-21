@@ -12,10 +12,10 @@ Implement binary search for benchmarking
 // Binary search
 int binarySearch(double* particles, double* grid, const int i, const int N, const int Nx){
     int low = 0, high = Nx-1;
-    int guess;
+    int guess, count = 0;
 
     double particle_pos = particles[i];
-    while (low <= high){
+    while (low <= high && count <= log2(Nx)){
         guess = (low + high) / 2;
         if (particle_pos >= grid[guess] && particle_pos < grid[guess + 1]){
             return guess;
@@ -23,9 +23,13 @@ int binarySearch(double* particles, double* grid, const int i, const int N, cons
         else if (particle_pos < grid[guess]){ // to left of guess
             high = guess;
         }
-        else { // to right of guess
+        else if (particle_pos > grid[guess+1]){ // to right of guess
             low = guess;
         }
+        count++;
+    }
+    if (particle_pos == grid[Nx-1]){ // original condition does not return guess if this is true
+        return Nx - 1;
     }
     return -1;
 }

@@ -14,9 +14,8 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 - Analyze gtx960 kernel benchmarking data
     - `./numiter` simulates the algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
     - Obtain CPU execution statistics and compare speedup
-        - Current run: `./machine-learning/benchmarking-cpu/N33554432/N33554432_Nx8388608/run18.txt`
-        - Created bash script for automating the benchmarking + Python wrapper around it
-        - Next step is to get all the data, and then write Python for parsing the `perf stat` output into a `.csv` containing runtime 
+        - Current Run: `./machine-learning/benchmarking-cpu/N134217728/N134217728_Nx2097152/run8.txt`
+        - Next step is to get all the data, and then write Python for parsing the `perf stat` output into a `.csv` containing runtimes 
 - Implement an ML model using `sklearn` in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
 
@@ -31,7 +30,7 @@ binarysearch.cu
 
 binarysearch.c
 - CPU code to run binary search on a population of randomly-distributed particles
-- `$ gcc binarysearch.c -o cpu-bs`
+- `$ gcc binarysearch.c -o cpu-bs -lm`
 - `$ ./cpu-bs N Nx`
 
 cpu-bs

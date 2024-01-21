@@ -1,20 +1,20 @@
-# started on Fri Jan 19 23:43:32 2024
+# started on Sat Jan 20 16:34:54 2024
 
 
  Performance counter stats for './cpu-bs 33554432 2097152':
 
-         12,021.77 msec task-clock                       #    0.993 CPUs utilized             
-             7,110      context-switches                 #  591.427 /sec                      
-                 5      cpu-migrations                   #    0.416 /sec                      
-           102,467      page-faults                      #    8.523 K/sec                     
-    50,589,266,150      cycles                           #    4.208 GHz                       
-    28,481,242,967      instructions                     #    0.56  insn per cycle            
-     3,531,521,036      branches                         #  293.760 M/sec                     
-       375,815,339      branch-misses                    #   10.64% of all branches           
+         16,447.56 msec task-clock                       #    1.000 CPUs utilized             
+                44      context-switches                 #    2.675 /sec                      
+                 8      cpu-migrations                   #    0.486 /sec                      
+           102,471      page-faults                      #    6.230 K/sec                     
+    69,629,065,080      cycles                           #    4.233 GHz                       
+    91,382,154,311      instructions                     #    1.31  insn per cycle            
+     7,866,796,791      branches                         #  478.296 M/sec                     
+       371,416,445      branch-misses                    #    4.72% of all branches           
 
-      12.104857746 seconds time elapsed
+      16.448392172 seconds time elapsed
 
-      11.896510000 seconds user
-       0.111967000 seconds sys
+      16.359745000 seconds user
+       0.087998000 seconds sys
 
 
