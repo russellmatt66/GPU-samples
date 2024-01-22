@@ -1,6 +1,6 @@
 '''
-Process `benchmarking-cpu/`, and put raw data into subdirectories 
-Calculate runtime statistics
+Process `benchmarking-cpu/`, and put raw data into subdirectories. 
+Then, calculate runtime statistics from the raw data.
 CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz
 '''
 import pandas as pd
@@ -9,16 +9,13 @@ import sys
 import os 
 import glob 
 
-data_heap = sys.argv[1]
-
-# Get the immediate subdirectories inside data_heap 
-particle_sizes = next(os.walk(data_heap))[1]
-print(particle_sizes)
-
+'''
+HELPER FUNCTIONS
+'''
 # IMPLEMENT
 # Obtain a list of strings representing paths to the datafiles in a sub-sub directory
 def getDataFiles(sub_sub_dir: str) -> list[str]:
-    data_files = []
+    data_files = ['run1.txt']
     return data_files
 
 # IMPLEMENT
@@ -43,14 +40,17 @@ def parseSubDirectory(sub_dir: str) -> pd.DataFrame:
         dict[feature] = []
     # Read in all sub directories of sub_dir (the sub-sub directories)
     sub_sub_dirs = next(os.walk(sub_dir))[1]
+    print(sub_sub_dirs)
     # Loop through the sub directories
-    for sub_sub_dir in sub_sub_dirs:       
+    for sub_sub_dir in sub_sub_dirs:      
         # Determine N 
         N = -1 # implement
         # Determine Nx 
         Nx = -1 
         # Get a list of datafiles inside sub-sub directory
+        sub_sub_dir = sub_sub_dir + "/" 
         data_files = getDataFiles(sub_sub_dir)
+        print(data_files)
         # Parse all the datafiles: "run{nrun}.txt" inside sub-sub directories
         for data_file in data_files:
             # Calculate nrun
@@ -61,11 +61,20 @@ def parseSubDirectory(sub_dir: str) -> pd.DataFrame:
             dict['Nx'].append(Nx)
             dict['nrun'].append(nrun)
             dict['runtime'].append(runtime)
-    
     df = pd.DataFrame(dict)
     return df
 
+'''
+MAIN CODE
+'''
+data_heap = sys.argv[1]
+
+# Get the immediate subdirectories inside data_heap 
+particle_sizes = next(os.walk(data_heap))[1]
+print(particle_sizes)
+
 for particle_size in particle_sizes:
     problem_directory = data_heap + particle_size + "/"
+    print(problem_directory)
     temp_df = parseSubDirectory(problem_directory)
     temp_df.to_csv(problem_directory + "raw.csv", index=False)
