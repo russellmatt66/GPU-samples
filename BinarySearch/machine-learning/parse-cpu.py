@@ -15,8 +15,19 @@ HELPER FUNCTIONS
 # IMPLEMENT
 # Obtain a list of strings representing paths to the datafiles in a sub-sub directory
 def getDataFiles(sub_sub_dir: str) -> list[str]:
-    data_files = ['run1.txt']
+    data_files = ['run1.txt','run2.txt']
     return data_files
+
+# IMPLEMENT
+# Obtain N from datafile
+def getN(perf_file: str) -> int:
+    N = -1
+    return N
+
+# IMPLEMENT
+def getNx(perf_file: str) -> int:
+    Nx = -1
+    return Nx
 
 # IMPLEMENT
 # Obtain the number of the run from the name of the datafile
@@ -42,13 +53,13 @@ def parseSubDirectory(sub_dir: str) -> pd.DataFrame:
     sub_sub_dirs = next(os.walk(sub_dir))[1]
     print(sub_sub_dirs)
     # Loop through the sub directories
-    for sub_sub_dir in sub_sub_dirs:      
-        # Determine N 
-        N = -1 # implement
-        # Determine Nx 
-        Nx = -1 
+    for sub_sub_dir in sub_sub_dirs:     
         # Get a list of datafiles inside sub-sub directory
-        sub_sub_dir = sub_sub_dir + "/" 
+        sub_sub_dir = sub_sub_dir + "/"  
+        # Determine N 
+        N = getN(sub_sub_dir) # implement
+        # Determine Nx 
+        Nx = getNx(sub_sub_dir) # implement
         data_files = getDataFiles(sub_sub_dir)
         print(data_files)
         # Parse all the datafiles: "run{nrun}.txt" inside sub-sub directories
@@ -78,3 +89,6 @@ for particle_size in particle_sizes:
     print(problem_directory)
     temp_df = parseSubDirectory(problem_directory)
     temp_df.to_csv(problem_directory + "raw.csv", index=False)
+
+# Calculate statistics from raw data
+# TODO
