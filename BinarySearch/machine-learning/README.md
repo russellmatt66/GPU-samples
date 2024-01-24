@@ -7,13 +7,16 @@ Beyond this, the goal of this part of the project is also to analyze the dataset
 gtx960-kerneldata/
 - Raw, benchmarking data for runs performed on a GeForce GTX 960
 - Contains some malformed data, but no missing values
+- `taukern` in units of [millseconds]
 
 gtx960-cleandata/
 - Contains .csv containing statistics for all the clean datasets
 - Contains .txt listing all the dirty datasets
+- `taukern` in units of [millseconds]
 
 benchmarking-cpu/
 - Storage for CPU benchmarking data
+- Runtime in units of [seconds]
 - CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz
 
 parse-cpu.py
