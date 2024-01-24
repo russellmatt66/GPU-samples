@@ -1,9 +1,25 @@
 digraph RandomForest {
     "*-kerneldata/" -> "clean.py";
-    "binarytree.c" -> "numiterations.cu";
-    "numiterations.cu" -> "./numiter";
+    "../binarysearch.cu" -> "../gpu-bs";
+    "../gpu-bs" -> "../automate-benchmarking.sh";
+    "../automate-benchmarking.sh" -> "*-kerneldata/";
+    "../binarysearch.c" -> "../cpu-bs";
+    "../cpu-bs" -> "../benchmarking-cpu.sh";
+    "../benchmarking-cpu.sh" -> "../benchmarking-cpu.py";
+    "../benchmarking-cpu.py" -> "cpu-benchmarking/";
+    "cpu-benchmarking/" -> "parse-cpu.py";
+    "parse-cpu.py" -> "benchmarking-cpu/N*/raw.csv";
+    "benchmarking-cpu/N*/raw.csv" -> "parse-cpu_raw.py";
+    "parse-cpu_raw.py" -> "benchmarking-cpu/cpu-stat.csv";
+    "benchmarking-cpu/cpu-stat.csv" -> "analyze.py";
+    "binarytree.h" -> "numiterations.c";
+    "numiterations.c" -> "./numiter";
     "N" -> "./numiter";
     "Nx" -> "./numiter";
+    "N" -> "../cpu-bs";
+    "Nx" -> "../cpu-bs";
+    "N_max" -> "../benchmarking-cpu.py";
+    "Nx_max" -> "../benchmarking-cpu.py";
     "./numiter" -> "clean.py";
     "clean.py" -> "*-cleandata/";
     "*-cleandata/" -> "analyze.py";

@@ -94,6 +94,3 @@ for particle_size in particle_sizes:
     print(problem_directory)
     temp_df = parseSubDirectory(problem_directory)
     temp_df.to_csv(problem_directory + "raw.csv", index=False)
-
-# Calculate statistics from raw data
-# TODO
