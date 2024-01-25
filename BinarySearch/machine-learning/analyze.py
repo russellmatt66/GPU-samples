@@ -34,9 +34,32 @@ import sys
 
 # Visualization targets:
 # (1) What does the performance landscape look like for a given problem size? 
-#   - Obtain this by graphing the average runtime / effective bandwidth against problem space 
+#   - Obtain this by graphing the average runtime | effective bandwidth against problem space 
+'''
+HELPER FUNCTIONS
+'''
+# Get the problem sizes for which timer malfunctioned, in order to ensure they are excluded from analysis
+def getDirtyN(line: str) -> int:
+    line = line.split('.')[0]
+    line = line.split('/')[2]
+    N = line.split('_Nx')[0]
+    N = N.split('N')[1]
+    # print(N)
+    return int(N)
 
+def getDirtyNx(line: str) -> int:
+    line = line.split('.')[0]
+    line = line.split('/')[2]
+    # print(line)
+    Nx = line.split('_Nx')[1]
+    # print(Nx)
+    return int(Nx)
+
+'''
+MAIN CODE
+'''
 clean_datafile = sys.argv[1] # expected to be *-cleandata/cleandata.csv
+cpu_stats = sys.argv[2] # expected to be benchmarking-cpu/stats.csv
 
 clean_df = pd.read_csv(clean_datafile)
 
@@ -51,3 +74,28 @@ print(sorted_df_effbw.head())
 # Sort the data in ascending order according to execution configuration
 sorted_df_execconfig = clean_df.sort_values(['num_blocks', 'num_threads_per_block', 'N', 'Nx'], ascending=[True, True, True, True])
 print(sorted_df_execconfig.head())
+
+N_sizes = sorted_df_execconfig['N'].unique()
+Nx_sizes = sorted_df_execconfig['Nx'].unique()
+print(N_sizes) 
+print(Nx_sizes)
+
+problem_sizes = []
+# Get dirty problem sizes so that they aren't added to problem_sizes
+dirty_problems = []
+clean_dir = clean_datafile.split('/')[0] + "/" 
+print(clean_dir)
+dirty_file = clean_dir + "dirty.txt"
+
+with open(dirty_file, 'r') as dfile:
+    for line in dfile:
+        dirty_N = getDirtyN(line)
+        dirty_Nx = getDirtyNx(line)
+        dirty_problems.append((dirty_N, dirty_Nx))
+print(dirty_problems)
+
+for N in N_sizes:
+    for Nx in Nx_sizes:
+        if (N,Nx) not in dirty_problems:
+            problem_sizes.append((N,Nx))
+print(problem_sizes)

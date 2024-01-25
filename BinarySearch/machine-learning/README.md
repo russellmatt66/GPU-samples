@@ -19,6 +19,9 @@ benchmarking-cpu/
 - Runtime in units of [seconds]
 - CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz
 
+data-analysis/
+- Contains results from analzying the performance data
+
 parse-cpu.py
 - Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
 - `python3 parse-cpu.py path/to/cpu-bench-data/`
