@@ -22,46 +22,48 @@ benchmarking-cpu/
 data-analysis/
 - Contains results from analzying the performance data
 
-parse-cpu.py
+parse-cpu.py (FIN)
 - Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
 - `python3 parse-cpu.py path/to/cpu-bench-data/`
 
-parse-cpu_raw.py
+parse-cpu_raw.py (FIN)
 - Parse the output from `parse-cpu.py`, and distill execution statistics from it. 
 - `python3 parse-cpu_raw.py path/to/cpu-bench-data-raws/`
 
-clean.py
+clean.py (FIN)
 - Script that operates on a `*-kerneldata/` folder which contains datasets from a benchmarking run on a GPU
 - Produces a directory, `*-clean/`, which contains the clean datasets, and a list of the malformed ones
 
-analyze.py
+analyze.py (WIP)
 - Script that operates on a `*-clean/` directory, and computes a number of relevant performance metrics
-- Also visualizes the performance landscapes of the various problems
 
-randomforest.py
+obtain-speedup.py (FIN)
+- Script that operates on a `*-clean/` directory, and `benchmarking-cpu/cpu-stats.csv` file, and creates `data-analysis/gpu-stats.csv`
+
+randomforest.py (WIP)
 - Code that builds, trains, and deploys ML models on datasets from a `*-clean/` directory.
 - Purpose of the models is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
 - Models are based on Random Forest architecture
 
-dnn.py
+dnn.py (WIP)
 - Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
 - Regression task implemented with `tensorflow` and `keras`.
 
-binarytree.h/
+binarytree.h (FIN)
 - Library functions for instantiating a binary tree
 
-numiterations.c/
+numiterations.c (FIN)
 - Use `binarytree.h` to calculate correct value for 'avg_iters' to put into effective bandwidth formula
     - Assumes uniformly-initialized particles, they were actually randomly-initialized (uniform distribution)
 - `$ gcc -std=c99 numiterations.c -o numiter -lm`
 
-numiterations.cu/
+numiterations.cu (FAIL)
 - Attempt at writing a CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.
     - Given that the population is initialized randomly, according to a uniform distribution.
 - Cannot figure out how to write `getCell()`
 - `$ nvcc numiterations.cu -o numiter` (don't compile)
 
-project.gv
+project.gv (WIP)
 - Graphviz source code for visualizing the structure of the project
 - `$ dot -Tpng project.gv -o project.png`
 
