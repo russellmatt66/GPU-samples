@@ -31,3 +31,16 @@
 # (1) What does the performance landscape look like for a given problem size? 
 #   - Obtain this by graphing the average runtime | effective bandwidth against problem space 
 '''
+import pandas as pd
+import sys
+import os
+
+path_to_gpu_stats = sys.argv[1]
+path_to_cpu_stats = sys.argv[2]
+
+gpu_df = pd.read_csv(path_to_gpu_stats)
+cpu_df = pd.read_csv(path_to_cpu_stats)
+
+speedup_df = gpu_df.sort_values('speedup', ascending=False)
+print(speedup_df)
+

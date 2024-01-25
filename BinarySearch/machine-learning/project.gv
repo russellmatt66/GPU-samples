@@ -20,9 +20,15 @@ digraph RandomForest {
     "Nx" -> "../cpu-bs";
     "N_max" -> "../benchmarking-cpu.py";
     "Nx_max" -> "../benchmarking-cpu.py";
+    "nruns" -> "../benchmarking-cpu.py";
     "./numiter" -> "clean.py";
     "clean.py" -> "*-cleandata/";
     "*-cleandata/" -> "obtain-speedup.py";
     "*-cleandata/" -> "randomforest.py"
     "obtain-speedup.py" -> "./data-analysis/gpu-stats.csv"
+    "N" [shape=circle, style=filled, fillcolor=green]
+    "Nx" [shape=circle, style=filled, fillcolor=green]
+    "N_max" [shape=circle, style=filled, fillcolor=green]
+    "Nx_max" [shape=circle, style=filled, fillcolor=green]
+    "nruns" [shape=circle, style=filled, fillcolor=green]
 }
