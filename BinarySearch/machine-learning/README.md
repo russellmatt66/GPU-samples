@@ -21,9 +21,11 @@ benchmarking-cpu/
 
 parse-cpu.py
 - Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
+- `python3 parse-cpu.py path/to/cpu-bench-data/`
 
 parse-cpu_raw.py
 - Parse the output from `parse-cpu.py`, and distill execution statistics from it. 
+- `python3 parse-cpu_raw.py path/to/cpu-bench-data-raws/`
 
 clean.py
 - Script that operates on a `*-kerneldata/` folder which contains datasets from a benchmarking run on a GPU
@@ -35,7 +37,12 @@ analyze.py
 
 randomforest.py
 - Code that builds, trains, and deploys ML models on datasets from a `*-clean/` directory.
-- Purpose of the models, which are based on the Random Forest architecture, is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
+- Purpose of the models is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
+- Models are based on Random Forest architecture
+
+dnn.py
+- Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
+- Regression task implemented with `tensorflow` and `keras`.
 
 binarytree.h/
 - Library functions for instantiating a binary tree
