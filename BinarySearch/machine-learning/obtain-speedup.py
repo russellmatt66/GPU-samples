@@ -49,7 +49,7 @@ def getEffBw(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads
                             & (gpu_df['num_blocks'] == num_blocks) 
                             & (gpu_df['num_threads_per_block'] == num_threads_per_block)]
     # print(eff_bw)
-    return eff_bw.item()
+    return abs(eff_bw.item())
 
 def getCpuRuntime(cpu_df: pd.DataFrame, N: int, Nx: int) -> np.float64:
     cpu_runtime = cpu_df['runtime-avg'].loc[(cpu_df['N'] == N)

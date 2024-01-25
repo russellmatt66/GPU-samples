@@ -44,3 +44,6 @@ cpu_df = pd.read_csv(path_to_cpu_stats)
 speedup_df = gpu_df.sort_values('speedup', ascending=False)
 print(speedup_df)
 
+effbw_df = gpu_df.sort_values('eff-bandwidth', ascending=False)
+print(effbw_df)
+
