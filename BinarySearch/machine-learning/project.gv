@@ -24,8 +24,11 @@ digraph RandomForest {
     "./numiter" -> "clean.py";
     "clean.py" -> "*-cleandata/";
     "*-cleandata/" -> "obtain-speedup.py";
-    "*-cleandata/" -> "randomforest.py"
-    "obtain-speedup.py" -> "./data-analysis/gpu-stats.csv"
+    "*-cleandata/" -> "randomforest.py";
+    "obtain-speedup.py" -> "./data-analysis/gpu-stats.csv";
+    "./data-analysis/gpu-stats.csv" -> "analyze.py";
+    "benchmarking-cpu/cpu-stats.csv" -> "analyze.py;
+    // Color the inputs differently
     "N" [shape=circle, style=filled, fillcolor=green]
     "Nx" [shape=circle, style=filled, fillcolor=green]
     "N_max" [shape=circle, style=filled, fillcolor=green]

@@ -35,13 +35,13 @@ def getAvgRuntime(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_th
     # print(avg_runtime)
     return avg_runtime.item()
 
-def getVarRuntime(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads_per_block: int) -> np.float64:
+def getRuntimeStd(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads_per_block: int) -> np.float64:
     var_runtime = gpu_df['runtime_variance'].loc[(gpu_df['N'] == N) 
                             & (gpu_df['Nx'] == Nx) 
                             & (gpu_df['num_blocks'] == num_blocks) 
                             & (gpu_df['num_threads_per_block'] == num_threads_per_block)]
     # print(var_runtime)
-    return var_runtime.item()
+    return np.sqrt(var_runtime.item())
 
 def getEffBw(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads_per_block: int) -> np.float64:
     eff_bw = gpu_df['effective_bandwidth'].loc[(gpu_df['N'] == N) 
@@ -50,6 +50,13 @@ def getEffBw(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads
                             & (gpu_df['num_threads_per_block'] == num_threads_per_block)]
     # print(eff_bw)
     return abs(eff_bw.item())
+
+def getEffBwStd(gpu_df: pd.DataFrame, N: int, Nx: int, num_blocks: int, num_threads_per_block: int) -> np.float64:
+    eff_bw_var = gpu_df['effective_bandwidth_variance'].loc[(gpu_df['N'] == N) 
+                            & (gpu_df['Nx'] == Nx) 
+                            & (gpu_df['num_blocks'] == num_blocks) 
+                            & (gpu_df['num_threads_per_block'] == num_threads_per_block)]
+    return np.sqrt(eff_bw_var.item())
 
 def getCpuRuntime(cpu_df: pd.DataFrame, N: int, Nx: int) -> np.float64:
     cpu_runtime = cpu_df['runtime-avg'].loc[(cpu_df['N'] == N)
@@ -104,7 +111,7 @@ for N in N_sizes:
 
 # Create a `gpu-stats.csv`
 gpu_dict = {}
-features = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'runtime-avg', 'runtime-var', 'eff-bandwidth', 'speedup']
+features = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'runtime-avg', 'runtime-std', 'eff-bandwidth', 'eff-bw-std', 'speedup']
 for feature in features:
     gpu_dict[feature] = []
 
@@ -125,8 +132,9 @@ for problem in problem_sizes:
         blocks = exec_config[0]
         threads_per = exec_config[1]
         avg_runtime = getAvgRuntime(sorted_df_execconfig, N, Nx, blocks, threads_per)
-        var_runtime = getVarRuntime(sorted_df_execconfig, N, Nx, blocks, threads_per)
+        std_runtime = getRuntimeStd(sorted_df_execconfig, N, Nx, blocks, threads_per)
         eff_bw = getEffBw(sorted_df_execconfig, N, Nx, blocks, threads_per)
+        eff_bw_std = getEffBwStd(sorted_df_execconfig, N, Nx, blocks, threads_per)
         cpu_runtime = getCpuRuntime(cpu_df, N, Nx)
         speedup = cpu_runtime / (avg_runtime*10.0**(-3)) # [avg_runtime] = [ms], [cpu_runtime] = [s] 
         print("(N, Nx, num_blocks, num_threads_per_block) = ({}, {}, {}, {}) gives a speedup of {}".format(N, Nx, blocks, threads_per, speedup))
@@ -135,8 +143,9 @@ for problem in problem_sizes:
         gpu_dict['num_blocks'].append(blocks)
         gpu_dict['num_threads_per_block'].append(threads_per)
         gpu_dict['runtime-avg'].append(avg_runtime)
-        gpu_dict['runtime-var'].append(var_runtime)
+        gpu_dict['runtime-std'].append(std_runtime)
         gpu_dict['eff-bandwidth'].append(eff_bw)
+        gpu_dict['eff-bw-std'].append(eff_bw_std)
         gpu_dict['speedup'].append(speedup) 
 
 gpu_df = pd.DataFrame(gpu_dict)

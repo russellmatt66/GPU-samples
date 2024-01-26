@@ -5,6 +5,7 @@ import os
 import glob 
 import subprocess
 '''
+NEEDS REFACTORING
 Clean the dataset
 Here, that means the following:
 (1) The dataset is complete, i.e., no missing values, but for sufficiently large problems the CUDA timer malfunctioned, and reported times of either 0 ms 
@@ -14,12 +15,16 @@ Here, that means the following:
 (3) The remaining clean data will be used in the ML component as the training, and validation datasets.
     - The data analysis component will analyze the clean data in order to compute statistics
 '''
-def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list, list, list):
+''' 
+HELPER FUNCTIONS
+'''
+def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list, list, list, list):
     df = pd.read_csv(data_csv)
     exec_configs = [] 
     avg_runtime = []
     variance = []
     eff_bandwidth = []
+    eff_bandwidth_var = []
     # Determine the problem size associated with the DataFrame
     # - Use string methods to obtain N, Nx from data_csv
     parts = data_csv.split('.')[0] # get rid of 'csv' ending
@@ -57,8 +62,11 @@ def computeStatistics(data_csv: str, num_iter_exe: str) -> (int, int, list, list
     for runtime in avg_runtime:
         eff_bw = (3.0 * avg_iter * 4.0 * N) / (runtime * 10**-3) / 10**9 # runtime is in milliseconds
         eff_bandwidth.append(eff_bw)
+        eff_bw_var = (3.0 * avg_iter * 4.0 * N) / (runtime_vals * 10**-3) / 10**9
+        eff_bw_var = eff_bw_var.var()
+        eff_bandwidth_var.append(eff_bw_var)
 
-    return N, Nx, exec_configs, avg_runtime, variance, eff_bandwidth
+    return N, Nx, exec_configs, avg_runtime, variance, eff_bandwidth, eff_bandwidth_var
 
 # 
 def isDirty(data_csv: str) -> bool:
@@ -67,7 +75,9 @@ def isDirty(data_csv: str) -> bool:
     threshold = 1.0e-9
     return df['taukern'].min() < threshold # malfunctioned data is either =0.0, or =1.0e-41 for this feature
 
-# Program code
+'''
+MAIN CODE
+'''
 kernel_data = sys.argv[1] # Should check that '*-kerneldata/' is taken as input, but who tf is being malicious with this
 print("kernel_data = {}".format(kernel_data))
 
@@ -116,13 +126,13 @@ print(dirty_files)
 
 cleanfiles_only = [file for file in all_files if (os.path.isfile(file) and (file != kernel_data + 'README.md')) and (file not in dirty_files)]
 
-stat_df = pd.DataFrame(columns=['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
+stat_df = pd.DataFrame(columns=['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth', 'effective_bandwidth_variance'])
 
 # 'num_iter_exe' simulates the binary search on the population of particles and calculates the number of iterations required to find all of them
 num_iter_exe_string = './numiter'
 
 # Test computeStatistics
-(N, Nx, e_c, a_r, v, e_b) = computeStatistics(cleanfiles_only[0], num_iter_exe_string)
+(N, Nx, e_c, a_r, v, e_b, e_b_var) = computeStatistics(cleanfiles_only[0], num_iter_exe_string)
 print(str(N) + '\n')
 print(str(Nx) + '\n')
 print(e_c)
@@ -131,11 +141,13 @@ print(v)
 print(e_b)
 
 # Add computeStatistics results to statistics DataFrame
-# The below is slow
+# The below is slow because I don't use a dictionary for creating the DataFrame
+# Needs to be refactored - really awful way to create a DataFrame
+gpu_dict = {}
 for data_file in cleanfiles_only:
-    (N, Nx, e_c, a_r, v, e_b) = computeStatistics(data_file, num_iter_exe_string)
+    (N, Nx, e_c, a_r, v, e_b, e_b_var) = computeStatistics(data_file, num_iter_exe_string)
     for idx in range(len(e_c)): # number of datapoints based on number of unique execution configurations
-        temp_df = pd.DataFrame([[N,Nx,e_c[idx][0],e_c[idx][1],a_r[idx],v[idx],e_b[idx]]],columns = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth'])
+        temp_df = pd.DataFrame([[N,Nx,e_c[idx][0],e_c[idx][1],a_r[idx],v[idx],e_b[idx],e_b_var[idx]]],columns = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'avg_runtime', 'runtime_variance', 'effective_bandwidth', 'effective_bandwidth_variance'])
         # stat_df = pd.concat([temp_df, stat_df])
         stat_df = pd.concat([temp_df, stat_df.loc[:, stat_df.notna().any()]], ignore_index=True)
 stat_df.to_csv(device_id + '-cleandata/cleandata.csv', index=False)
