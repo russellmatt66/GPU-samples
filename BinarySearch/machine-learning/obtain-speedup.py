@@ -63,6 +63,13 @@ def getCpuRuntime(cpu_df: pd.DataFrame, N: int, Nx: int) -> np.float64:
                                             & (cpu_df['Nx'] == Nx)]
     # print(cpu_runtime)
     return cpu_runtime.item()
+
+# Helpers for reading gpu and cpu raw timing data
+def getTaukern() -> list[np.float64]:
+    return []
+
+def getCPUTiming() -> list[np.float64]:
+    return []
 '''
 MAIN CODE
 '''
@@ -151,3 +158,26 @@ for problem in problem_sizes:
 gpu_df = pd.DataFrame(gpu_dict)
 gpu_df.to_csv("./data-analysis/gpu-stats.csv", index=False)        
 
+'''
+Compute std of speedup measurements and append to gpu_df
+'''
+# Why is this not being done previously? 
+# Because I didn't think to do it, and it requires going back into the raw timing data.
+ 
+speedup_std = {}
+speedup_std['speedup-std'] = []
+
+cpu_timing_data = []
+gpu_timing_data = []
+
+for problem_size in problem_sizes:
+    N = problem[0]
+    Nx = problem[1]
+    for exec_config in exec_configs:
+        blocks = exec_config[0]
+        threads_per = exec_config[1]
+        # Go to relevant folder in ./machine-learning/benchmarking-cpu/ 
+        # Read timing data from files
+        # Go to relevant folder in .machine-learning/*-kerneldata/
+        # Read timing data from files
+        # Calculate the 
