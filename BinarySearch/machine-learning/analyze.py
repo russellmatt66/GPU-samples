@@ -39,7 +39,7 @@
 '''
 HELPER FUNCTIONS
 '''
-# Just in case
+# WIP
 '''
 MAIN CODE
 '''

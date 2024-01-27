@@ -6,12 +6,12 @@ digraph RandomForest {
     "../binarysearch.c" -> "../cpu-bs";
     "../cpu-bs" -> "../benchmarking-cpu.sh";
     "../benchmarking-cpu.sh" -> "../benchmarking-cpu.py";
-    "../benchmarking-cpu.py" -> "cpu-benchmarking/";
-    "cpu-benchmarking/" -> "parse-cpu.py";
-    "parse-cpu.py" -> "benchmarking-cpu/N*/raw.csv";
-    "benchmarking-cpu/N*/raw.csv" -> "parse-cpu_raw.py";
-    "parse-cpu_raw.py" -> "benchmarking-cpu/cpu-stats.csv";
-    "benchmarking-cpu/cpu-stats.csv" -> "obtain-speedup.py";
+    "../benchmarking-cpu.py" -> "./benchmarking-cpu/";
+    "./benchmarking-cpu/" -> "parse-cpu.py";
+    "parse-cpu.py" -> "./benchmarking-cpu/N*/raw.csv";
+    "./benchmarking-cpu/N*/raw.csv" -> "parse-cpu_raw.py";
+    "parse-cpu_raw.py" -> "./benchmarking-cpu/cpu-stats.csv";
+    "./benchmarking-cpu/cpu-stats.csv" -> "obtain-speedup.py";
     "binarytree.h" -> "numiterations.c";
     "numiterations.c" -> "./numiter";
     "N" -> "./numiter";
@@ -24,10 +24,12 @@ digraph RandomForest {
     "./numiter" -> "clean.py";
     "clean.py" -> "*-cleandata/";
     "*-cleandata/" -> "obtain-speedup.py";
-    "*-cleandata/" -> "randomforest.py";
     "obtain-speedup.py" -> "./data-analysis/gpu-stats.csv";
     "./data-analysis/gpu-stats.csv" -> "analyze.py";
-    "benchmarking-cpu/cpu-stats.csv" -> "analyze.py;
+    "./benchmarking-cpu/cpu-stats.csv" -> "analyze.py";
+    "./data-analysis/gpu-stats.csv" -> "randomforest.py";
+    "clean.py" -> "./*-cleandata/dirty.txt";
+    "./*-cleandata/dirty.txt" -> "randomforest.py";
     // Color the inputs differently
     "N" [shape=circle, style=filled, fillcolor=green]
     "Nx" [shape=circle, style=filled, fillcolor=green]
