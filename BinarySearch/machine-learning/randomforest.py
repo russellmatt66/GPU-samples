@@ -5,10 +5,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 
-# Workflow for a new dataset is: clean.py -> analyze.py -> randomforest.py 
-
-# (1) Prediction target is 'taukern', the execution time of the kernel in milliseconds
+'''
+# (1) Prediction targets are:
+    - 'taukern', the execution time of the kernel in milliseconds
+    - 'effective-bandwidth', the rate at which the kernel processed data
+    - 'speedup', the factor by which the kernel was faster than a single-threaded CPU implementation of the same code 
 # (2) Features are the problem size, so N and N_{x}, the number of blocks, and the number of threads per block
+'''
 
 clean_datafile = sys.argv[1] # expected to be *-cleandata/cleandata.csv
 
