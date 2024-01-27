@@ -65,11 +65,64 @@ def getCpuRuntime(cpu_df: pd.DataFrame, N: int, Nx: int) -> np.float64:
     return cpu_runtime.item()
 
 # Helpers for reading gpu and cpu raw timing data
-def getTaukern() -> list[np.float64]:
-    return []
+# Go to relevant folder in .machine-learning/*-kerneldata/
+# Read timing data from files, units are [ms]
+def getGPUTimingData(kernel_data_folders: list[str], N : int, Nx: int, num_blocks: int, threads_per: int, path_to_kernel_data: str) -> list[np.float64]:
+    # print(path_to_kernel_data)
+    data_files = []
+    for data_folder in kernel_data_folders:
+        if int(data_folder.split('N')[1]) == N:
+            data_files = next(os.walk(path_to_kernel_data + data_folder + "/"))[2]
+            break
 
-def getCPUTiming() -> list[np.float64]:
-    return []
+    gpu_timing_data = []
+    temp_df = pd.DataFrame()
+    for file in data_files:
+        if int(file.split('_Nx')[0].split('N')[1]) == N and int(file.split('_Nx')[1].split('.csv')[0]) == Nx:
+            file = path_to_kernel_data + data_folder + "/" + file
+            temp_df = pd.read_csv(file)
+            temp_df = temp_df.loc[(temp_df['num_blocks'] == num_blocks) & (temp_df['num_threads_per_block'] == threads_per)]
+            gpu_timing_data = temp_df['taukern'].tolist()
+            break
+
+    return gpu_timing_data
+
+# Obtain runtime from a .txt file representing output from a call to `perf stat`
+def getRuntime(perf_file: str) -> float:
+    runtime = -1.0
+    with open(perf_file, 'r') as data_file:
+        for line in data_file:
+            rtIdx = line.find("seconds time elapsed") # magic string because of perf stat output
+            if (rtIdx != -1):
+                runtime = float(line[:rtIdx].strip())
+                break
+    return runtime
+
+# Go to relevant folder in ./machine-learning/benchmarking-cpu/ 
+# Read timing data from files
+def getCPUTimingData(cpu_data_folders: list[str], N: int, Nx: int, path_to_cpu_data: str) -> list[np.float64]:
+    # print(cpu_data_folders)
+    sub_folders = []
+    for data_folder in cpu_data_folders:
+        if int(data_folder.split('N')[1]) == N:
+            print("N: {}, data_folder: {}".format(N, data_folder))
+            sub_folders = next(os.walk(path_to_cpu_data + data_folder + "/"))[1] # get immediate sub-directories
+            break
+
+    run_files = []
+    for sub_folder in sub_folders:
+        if int(sub_folder.split('_Nx')[0].split('N')[1]) == N and int(sub_folder.split('_Nx')[1]) == Nx:
+            print("N: {}, Nx: {}, sub_folder: {}, path_to_cpu_data: {}".format(N, Nx, sub_folder, path_to_cpu_data))
+            run_files = next(os.walk(path_to_cpu_data + data_folder + "/" + sub_folder + "/"))[2] # get immediate files
+            break
+    
+    cpu_timing_data = []
+    for file in run_files:
+        file = path_to_cpu_data + data_folder + "/" + sub_folder + "/" + file
+        cpu_timing_data.append(getRuntime(file))
+
+    print(cpu_timing_data)
+    return cpu_timing_data
 '''
 MAIN CODE
 '''
@@ -118,9 +171,23 @@ for N in N_sizes:
 
 # Create a `gpu-stats.csv`
 gpu_dict = {}
-features = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'runtime-avg', 'runtime-std', 'eff-bandwidth', 'eff-bw-std', 'speedup']
+features = ['N', 'Nx', 'num_blocks', 'num_threads_per_block', 'runtime-avg', 'runtime-std', 'eff-bandwidth', 'eff-bw-std', 'speedup', 'speedup-std']
 for feature in features:
     gpu_dict[feature] = []
+
+# This stuff is needed to calculate the standard deviation in the speedup
+cpu_timing_data = []
+gpu_timing_data = []
+
+kernel_data = clean_datafile.split('-')[0] + "-kerneldata/"
+print("kernel_data: {}".format(kernel_data))
+cpu_data = cpu_stats.split('/')[0] + "/"
+print("cpu_data: {}".format(cpu_data))
+
+kernel_data_folders = next(os.walk(kernel_data))[1] # get immediate subdirectories inside gpu timing data storage
+print("kernel_data_folders: {}".format(kernel_data_folders))
+cpu_data_folders = next(os.walk(cpu_data))[1] # " " " " " " " "
+print("cpu_data_folders: {}".format(cpu_data_folders))
 
 num_blocks = sorted_df_execconfig['num_blocks'].unique()
 num_threads_per_block = sorted_df_execconfig['num_threads_per_block'].unique()
@@ -138,13 +205,19 @@ for problem in problem_sizes:
     for exec_config in exec_configs:
         blocks = exec_config[0]
         threads_per = exec_config[1]
+        # Calculate all the stuff and put it in a dict
         avg_runtime = getAvgRuntime(sorted_df_execconfig, N, Nx, blocks, threads_per)
         std_runtime = getRuntimeStd(sorted_df_execconfig, N, Nx, blocks, threads_per)
         eff_bw = getEffBw(sorted_df_execconfig, N, Nx, blocks, threads_per)
         eff_bw_std = getEffBwStd(sorted_df_execconfig, N, Nx, blocks, threads_per)
         cpu_runtime = getCpuRuntime(cpu_df, N, Nx)
         speedup = cpu_runtime / (avg_runtime*10.0**(-3)) # [avg_runtime] = [ms], [cpu_runtime] = [s] 
-        print("(N, Nx, num_blocks, num_threads_per_block) = ({}, {}, {}, {}) gives a speedup of {}".format(N, Nx, blocks, threads_per, speedup))
+        # Calculate the standard deviation in the speedup
+        cpu_timing_data = np.array(getCPUTimingData(cpu_data_folders, N, Nx, cpu_data))
+        gpu_timing_data = np.array(getGPUTimingData(kernel_data_folders, N, Nx, blocks, threads_per, kernel_data))
+        speedup_array = cpu_timing_data / (gpu_timing_data * 10**-3)
+        speedup_std = np.sqrt(np.var(speedup_array))
+        # print("(N, Nx, num_blocks, num_threads_per_block) = ({}, {}, {}, {}) gives a speedup of {}".format(N, Nx, blocks, threads_per, speedup))
         gpu_dict['N'].append(N)
         gpu_dict['Nx'].append(Nx)
         gpu_dict['num_blocks'].append(blocks)
@@ -154,30 +227,39 @@ for problem in problem_sizes:
         gpu_dict['eff-bandwidth'].append(eff_bw)
         gpu_dict['eff-bw-std'].append(eff_bw_std)
         gpu_dict['speedup'].append(speedup) 
+        gpu_dict['speedup-std'].append(speedup_std)
 
 gpu_df = pd.DataFrame(gpu_dict)
 gpu_df.to_csv("./data-analysis/gpu-stats.csv", index=False)        
 
 '''
-Compute std of speedup measurements and append to gpu_df
+Compute std of speedup measurements 
+Implemented above
 '''
-# Why is this not being done previously? 
-# Because I didn't think to do it, and it requires going back into the raw timing data.
- 
-speedup_std = {}
-speedup_std['speedup-std'] = []
+# speedup_std = {}
+# speedup_std['speedup-std'] = []
 
-cpu_timing_data = []
-gpu_timing_data = []
+# cpu_timing_data = []
+# gpu_timing_data = []
 
-for problem_size in problem_sizes:
-    N = problem[0]
-    Nx = problem[1]
-    for exec_config in exec_configs:
-        blocks = exec_config[0]
-        threads_per = exec_config[1]
-        # Go to relevant folder in ./machine-learning/benchmarking-cpu/ 
-        # Read timing data from files
-        # Go to relevant folder in .machine-learning/*-kerneldata/
-        # Read timing data from files
-        # Calculate the 
+# kernel_data = clean_datafile.split('-')[0] + "-kerneldata/"
+# cpu_data = cpu_stats.split('/')[0] + "/"
+
+# kernel_data_folders = next(os.walk(kernel_data))[1] # get immediate subdirectories inside gpu timing data storage
+# cpu_data_folders = next(os.walk(cpu_data))[1] # " " " " " " " "
+
+# for problem_size in problem_sizes:
+#     N = problem[0]
+#     Nx = problem[1]
+#     for exec_config in exec_configs:
+#         blocks = exec_config[0]
+#         threads_per = exec_config[1]
+#         # Go to relevant folder in ./machine-learning/benchmarking-cpu/ 
+#         # Read timing data from files
+#         cpu_timing_data = np.ndarray(getCPUTimingData(cpu_data_folders, N, Nx))
+#         # Go to relevant folder in .machine-learning/*-kerneldata/
+#         # Read timing data from files, units are [ms]
+#         gpu_timing_data = np.ndarray(getGPUTimingData(kernel_data_folders, N, Nx))
+#         # Calculate the standard deviation in the speedup
+#         speedup = cpu_timing_data / (gpu_timing_data * 10**-3)
+#         speedup_std = np.sqrt(np.var(speedup))
