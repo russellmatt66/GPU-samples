@@ -102,8 +102,14 @@ for (i, val_row) in y_val.iterrows():
 # print(len(prediction_indices))
     
 multiple_mre = [0.0] * 6
+max_mre = [0.0] * 6
+min_mre = [0.0] * 6
+std_mre = [0.0] * 6
 
 for i in range(len(multiple_mre)):
     multiple_mre[i] = relative_errors[:,i].mean()
-    print("MRE of {} is: {}".format(targets[i], multiple_mre[i]))
+    max_mre[i] = relative_errors[:,i].max()
+    min_mre[i] = relative_errors[:,i].min()
+    std_mre[i] = relative_errors[:,i].std()
+    print("MRE of {} is: {}, stddev: {}, max: {}, min: {}".format(targets[i], multiple_mre[i], std_mre[i], max_mre[i], min_mre[i]))
 
