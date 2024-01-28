@@ -105,5 +105,5 @@ multiple_mre = [0.0] * 6
 
 for i in range(len(multiple_mre)):
     multiple_mre[i] = relative_errors[:,i].mean()
-    print("MRE of {} is: {}".format(targets[i], multiple_mae[i]))
+    print("MRE of {} is: {}".format(targets[i], multiple_mre[i]))
 

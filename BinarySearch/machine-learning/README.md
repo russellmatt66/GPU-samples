@@ -20,7 +20,7 @@ benchmarking-cpu/
 - CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz
 
 data-analysis/
-- Contains results from analzying the performance data
+- Contains results from analyzing the performance data
 
 parse-cpu.py (FIN)
 - Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
@@ -41,9 +41,8 @@ obtain-speedup.py (FIN)
 - Script that operates on a `*-clean/` directory, and `benchmarking-cpu/cpu-stats.csv` file, and creates `data-analysis/gpu-stats.csv`
 
 randomforest.py (WIP)
-- Code that builds, trains, and deploys ML models on datasets from a `*-clean/` directory.
-- Purpose of the models is to predict the performance of the code on the problem sizes which were so large that the CUDA-based timer malfunctioned. 
-- Models are based on Random Forest architecture
+- Code that builds, trains, and deploys a Random Forest model on the gpu-stats dataset from `./data-analysis` directory.
+- Purpose of the model is to predict performance, and uncertainty associated with values. 
 
 dnn.py (WIP)
 - Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
@@ -56,6 +55,9 @@ numiterations.c (FIN)
 - Use `binarytree.h` to calculate correct value for 'avg_iters' to put into effective bandwidth formula
     - Assumes uniformly-initialized particles, they were actually randomly-initialized (uniform distribution)
 - `$ gcc -std=c99 numiterations.c -o numiter -lm`
+
+./numiter (FIN)
+- Simulates the binary search algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
 
 numiterations.cu (FAIL)
 - Attempt at writing a CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.

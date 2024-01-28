@@ -12,11 +12,11 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 # Current Tasks
 (1) `machine-learning/`
 - Analyze gtx960 kernel benchmarking data
-    - `./numiter` simulates the algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
-    - Obtain CPU execution statistics and compare speedup to GPU
-        - Parse `raw.csv`'s containing runtime data into a single `.csv` containing CPU runtime statistics
-- Implement an ML model using `sklearn` in order to predict the execution configuration performance for corrupt data.
+    - Work on `analyze.py`
+- Implement ML models  in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
+    - Using `sklearn`: Random Forest multi-output implemented. MAE and MRE computed.
+    - DNN: `WIP`
 
 (2) Run project on RTX 2060
 - Refactor GPU side of project to be in line with code quality of CPU benchmarking. 
