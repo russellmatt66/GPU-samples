@@ -131,14 +131,6 @@ cpu_stats = sys.argv[2] # expected to be benchmarking-cpu/stats.csv
 
 clean_df = pd.read_csv(clean_datafile)
 
-# # Sort the data by fastest feature set
-# sorted_df_taukern = clean_df.sort_values('avg_runtime')
-# print(sorted_df_taukern.head())
-
-# # Sort the data by which feature set had the highest effective bandwidth
-# sorted_df_effbw = clean_df.sort_values('effective_bandwidth', ascending=False)
-# print(sorted_df_effbw.head())
-
 # Sort the data in ascending order according to execution configuration
 sorted_df_execconfig = clean_df.sort_values(['num_blocks', 'num_threads_per_block', 'N', 'Nx'], ascending=[True, True, True, True])
 print(sorted_df_execconfig.head())

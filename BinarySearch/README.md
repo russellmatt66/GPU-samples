@@ -22,10 +22,18 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 - Refactor GPU side of project to be in line with code quality of CPU benchmarking. 
 
 # Directory Structure
-binarysearch.cu
+benchmarking-data/
+- Storage for raw GPU benchmarking data from most recent device run
+
+machine-learning/
+- Contains Python code to analyze the performance data and predict the performance as a function of execution configuration 
+- Also contains CPU benchmarking data, copy of raw GPU benchmarking data, and clean versions of the GPU data, as well
+
+binarysearch.cu 
 - Code to benchmark binary search CUDA kernel
-- **Appends** data to .csv files
+- **Appends** data to .csv files (`NEEDS REFACTOR`)
 - `$nvcc -o benchmark binarysearch.cu`
+- `./benchmark N Nx SM_mult num_threads_per num_runs`
 
 binarysearch.c
 - CPU code to run binary search on a population of randomly-distributed particles
@@ -46,11 +54,6 @@ benchmarking-cpu.py
 - Python that wraps around `benchmarking-cpu.sh`
 - Creates the data folder for every possible problem size 
 
-benchmarking-data/
-- Storage for GPU benchmarking data
-
-machine-learning/
-- Contains Python code to analyze the performance data and predict the performance as a function of execution configuration 
 
 binarysearch-validate.cu
 - Code to validate binary search using linear search

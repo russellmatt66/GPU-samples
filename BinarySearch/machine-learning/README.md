@@ -7,12 +7,12 @@ Beyond this, the goal of this part of the project is also to analyze the dataset
 gtx960-kerneldata/
 - Raw, benchmarking data for runs performed on a GeForce GTX 960
 - Contains some malformed data, but no missing values
-- `taukern` in units of [millseconds]
+- `taukern` in units of [milliseconds]
 
 gtx960-cleandata/
 - Contains .csv containing statistics for all the clean datasets
 - Contains .txt listing all the dirty datasets
-- `taukern` in units of [millseconds]
+- `taukern` in units of [milliseconds]
 
 benchmarking-cpu/
 - Storage for CPU benchmarking data
@@ -23,7 +23,7 @@ data-analysis/
 - Contains results from analyzing the performance data
 
 parse-cpu.py (FIN)
-- Parse the output from all the runs of `perf stat`, i.e., the data in `benchmarking-cpu/`, and distill runtime from it  
+- Parse the output from all the runs of `perf stat`, i.e., the raw CPU benchmarking data in `benchmarking-cpu/`, and distill runtime from it  
 - `python3 parse-cpu.py path/to/cpu-bench-data/`
 
 parse-cpu_raw.py (FIN)
@@ -43,6 +43,7 @@ obtain-speedup.py (FIN)
 randomforest.py (WIP)
 - Code that builds, trains, and deploys a Random Forest model on the gpu-stats dataset from `./data-analysis` directory.
 - Purpose of the model is to predict performance, and uncertainty associated with values. 
+- `python3 randomforest.py ./data-analysis/gpu-stats.csv ./gtx960-cleandata/dirty.txt`
 
 dnn.py (WIP)
 - Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
