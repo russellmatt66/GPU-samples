@@ -101,12 +101,7 @@ model = keras.Sequential([
     layers.Dense(units=512, activation='relu'),
     layers.Dense(units=512, activation='relu'),
     # Output layer
-    layers.Dense(units=1, name='avg-runtime'),
-    layers.Dense(units=1, name='eff-bandwidth'),
-    layers.Dense(units=1, name='speedup'),
-    layers.Dense(units=1, name='std_avg-runtime'),
-    layers.Dense(units=1, name='std_eff-bandwidth'),
-    layers.Dense(units=1, name='std_speedup')
+    layers.Dense(units=6)
 ])
 
 model.compile(
@@ -135,3 +130,7 @@ block_bounds = (min_blocks_per, max_blocks_per)
 threads_per_bounds = (min_threads_per, max_threads_per) 
 dirty_df = getDirtyFeatures(path_to_dirty_problems, block_bounds, threads_per_bounds)
 print(dirty_df.head())
+print(dirty_df.shape)
+
+dirty_predictions = model.predict(dirty_df)
+print(dirty_predictions.shape)
