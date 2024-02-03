@@ -51,7 +51,7 @@ randomforest.py (WIP)
 dnn.py (WIP)
 - Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
 - Regression task implemented with `tensorflow` and `keras`.
-- `python3 dnn.py ./data-analysis/gpu-stats.csv`
+- `python3 dnn.py ./data-analysis/gpu-stats.csv ./*-cleandata/dirty.txt`
 
 binarytree.h (FIN)
 - Library functions for instantiating a binary tree
