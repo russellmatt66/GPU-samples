@@ -33,12 +33,15 @@ parse-cpu_raw.py (FIN)
 clean.py (FIN)
 - Script that operates on a `*-kerneldata/` folder which contains datasets from a benchmarking run on a GPU
 - Produces a directory, `*-clean/`, which contains the clean datasets, and a list of the malformed ones
+- TODO - RUN INSTRUCTIONS
 
 analyze.py (WIP)
 - Script that operates on a `*-clean/` directory, and computes a number of relevant performance metrics
+- TODO - RUN INSTRUCTIONS
 
 obtain-speedup.py (FIN)
 - Script that operates on a `*-clean/` directory, and `benchmarking-cpu/cpu-stats.csv` file, and creates `data-analysis/gpu-stats.csv`
+- TODO - RUN INSTRUCTIONS
 
 randomforest.py (WIP)
 - Code that builds, trains, and deploys a Random Forest model on the gpu-stats dataset from `./data-analysis` directory.
@@ -48,6 +51,7 @@ randomforest.py (WIP)
 dnn.py (WIP)
 - Code that builds, trains, and deploys a deep neural network to predict timing values based on datasets from a `*-clean/` directory.
 - Regression task implemented with `tensorflow` and `keras`.
+- `python3 dnn.py ./data-analysis/gpu-stats.csv`
 
 binarytree.h (FIN)
 - Library functions for instantiating a binary tree
@@ -56,9 +60,12 @@ numiterations.c (FIN)
 - Use `binarytree.h` to calculate correct value for 'avg_iters' to put into effective bandwidth formula
     - Assumes uniformly-initialized particles, they were actually randomly-initialized (uniform distribution)
 - `$ gcc -std=c99 numiterations.c -o numiter -lm`
+- TODO - RUN INSTRUCTIONS
 
 ./numiter (FIN)
+- Binary created from `numiterations.c`
 - Simulates the binary search algorithm and obtains an exact value for the number of iterations it takes to find all the particles. 
+- TODO - RUN INSTRUCTIONS
 
 numiterations.cu (FAIL)
 - Attempt at writing a CUDA program to accurately determine the number of iterations that it takes, on average, to find a particle using binary search.

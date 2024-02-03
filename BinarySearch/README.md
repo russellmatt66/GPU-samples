@@ -13,6 +13,7 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
 (1) `machine-learning/`
 - Analyze gtx960 kernel benchmarking data
     - Work on `analyze.py`
+        - Create wrappers for producing analysis targets
 - Implement ML models  in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
     - Using `sklearn`: Random Forest multi-output implemented. MAE and MRE computed.
