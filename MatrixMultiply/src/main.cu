@@ -14,7 +14,7 @@
 #include <string>
 
 // row-major order
-#define IDX2C(i, j, N) (((i)*(N))+(j))
+#define IDX2D(i, j, N) (((i)*(N))+(j))
 
 __global__ void InitializeMatrices(float *C, float *A, float *B, const int N, const unsigned long long seed){
 	int tidx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -30,9 +30,9 @@ __global__ void InitializeMatrices(float *C, float *A, float *B, const int N, co
 
 	for (int i = tidx; i < N; i += xthreads){
 		for (int j = tidy; j < N; j += ythreads){
-			A[IDX2C(i, j, N)] = static_cast<float>(curand_uniform(&state));
-			B[IDX2C(i, j, N)] = static_cast<float>(curand_uniform(&state));
-			C[IDX2C(i, j, N)] = 0.0;
+			A[IDX2D(i, j, N)] = static_cast<float>(curand_uniform(&state));
+			B[IDX2D(i, j, N)] = static_cast<float>(curand_uniform(&state));
+			C[IDX2D(i, j, N)] = 0.0;
 		}
 	}
 	return;
@@ -49,9 +49,9 @@ __global__ void MatMul(float *C, const float *A, const float *B, const int N){
 		for (int j = tidy; j < N; j += ythreads){
 			sum = 0;
 			for (int k = 0; k < N; k++){
-				sum += A[IDX2C(i, k, N)] * B[IDX2C(k, j, N)];
+				sum += A[IDX2D(i, k, N)] * B[IDX2D(k, j, N)];
 			}
-			C[IDX2C(i, j, N)] = sum;
+			C[IDX2D(i, j, N)] = sum;
 		}
 	}
 	return;
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
 	checkCuda(cudaMallocManaged(&C, pow(N,2)*sizeof(float)));
 
 	std::cout << "Size of matrices is: " << pow(N,2) << std::endl;
-	
+
     // Get device attributes 
     int deviceId;
     int numberOfSMs;
