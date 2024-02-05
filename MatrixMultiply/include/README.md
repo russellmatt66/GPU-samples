@@ -4,7 +4,7 @@ Library functions
 # Directory Structure
 matmul.cu
 - Implements square matrix multiplication
-- Moved to main.cu because of include problems
+- Functionality moved to main.cu because of include problems
 
 matrix.cu
 - Implements `Matrix` class
