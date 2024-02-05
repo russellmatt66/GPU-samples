@@ -1,5 +1,5 @@
 # Directory Structure
-BinarySearch/ (WIP)
+BinarySearch/ (PEN)
 - CUDA implementation of binary search
 - GPU: GeForce GTX 960 (Maxwell 5.2) 
 - Current tasks:
@@ -10,10 +10,14 @@ BinarySearch/ (WIP)
 InnerProduct/ (FIN)
 - CUDA implementation of inner product
 
+MatrixMultiply/ (WIP)
+- CUDA implementation of matrix multiply
+
 Transpose/ (NYB)
 - CUDA implementation of matrix transpose 
 
 # Glossary
 - WIP = Work In Progress
 - FIN = Finished
+- PEN = Penultimate Stage
 - NYB = Not Yet Begun

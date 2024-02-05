@@ -16,8 +16,8 @@ GPU: GeForce GTX 960 (Maxwell 5.2)
         - Create wrappers for producing analysis targets
 - Implement ML models  in order to predict the execution configuration performance for corrupt data.
     - For large data volumes, the output from the CUDA timer library is incoherent, necessitating the usage of models for predicting their performance 
-    - Using `sklearn`: Random Forest multi-output implemented. MAE and MRE computed.
-    - DNN: `WIP`
+    - Using `sklearn`: Random Forest multi-output regression implemented. MAE and MRE computed.
+    - Using `TensorFlow`: DNN multi-output regression implemented. MAE computed. 
 
 (2) Run project on RTX 2060
 - Refactor GPU side of project to be in line with code quality of CPU benchmarking. 
