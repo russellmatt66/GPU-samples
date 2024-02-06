@@ -8,6 +8,7 @@
 #include <curand_kernel.h>
 #include <math.h>
 #include <cstdlib>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -71,7 +72,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 // TODO - Add timing
 int main(int argc, char* argv[]){
 	// Accept arguments 
-	int N = atoi(argv[1]); // length of matrix side
+	// int N = atoi(argv[1]); // length of matrix side - CHECK IF THIS IS CAUSING BUG
+	uint64_t N = atoi(argv[1]);
 	int SM_multiplier_x = atoi(argv[2]); // used for changing number of blocks
 	int SM_multiplier_y = atoi(argv[3]);
 	int num_threads_per_block_x = atoi(argv[4]);
@@ -80,9 +82,12 @@ int main(int argc, char* argv[]){
 	// Allocate Matrices on Device
 	float *A, *B, *C; // flattened arrays because that is easiest with CUDA
 
-	checkCuda(cudaMallocManaged(&A, pow(N,2)*sizeof(float)));
-	checkCuda(cudaMallocManaged(&B, pow(N,2)*sizeof(float)));
-	checkCuda(cudaMallocManaged(&C, pow(N,2)*sizeof(float)));
+	// checkCuda(cudaMallocManaged(&A, (uint64_t)pow((uint64_t)N,2)*sizeof(float))); // cast b/c of integer overflow 
+	// checkCuda(cudaMallocManaged(&B, (uint64_t)pow((uint64_t)N,2)*sizeof(float)));
+	// checkCuda(cudaMallocManaged(&C, (uint64_t)pow((uint64_t)N,2)*sizeof(float)));
+	checkCuda(cudaMallocManaged(&A, ((uint64_t)N)*((uint64_t)N)*sizeof(float))); // cast b/c of integer overflow 
+	checkCuda(cudaMallocManaged(&B, ((uint64_t)N)*((uint64_t)N)*sizeof(float))); // pow(N,2) not behaving
+	checkCuda(cudaMallocManaged(&C, ((uint64_t)N)*((uint64_t)N)*sizeof(float)));
 
 	std::cout << "Size of matrices is: " << pow(N,2) << std::endl;
 
