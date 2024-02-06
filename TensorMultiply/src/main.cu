@@ -13,7 +13,6 @@
 // row-major order
 #define IDX3D(i, j, k, N) (k*(pow(N,2)) + i*N + j)
 
-
 __global__ void TensorMultiply(float *C, const float *A, const float *B, const int N){
 	// TODO - Implement these expressions
 	int tidx = 0;
@@ -26,6 +25,7 @@ __global__ void TensorMultiply(float *C, const float *A, const float *B, const i
 	// TODO - Implement tensmult logic
 	
 }
+
 int main(int argc, char* argv){
 	
 	return 0;

@@ -1,6 +1,6 @@
 # Current Tasks
 main.cu
-- Add timing to main.cu
+- Understand why code can run with `N = 2^21`, should only be able to run up to `N = 2^14`.
 - Add host code to validate against
 
 CMakeLists.txt

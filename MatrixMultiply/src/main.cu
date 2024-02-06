@@ -44,10 +44,10 @@ __global__ void MatMul(float *C, const float *A, const float *B, const int N){
 	int xthreads = gridDim.x * blockDim.x;
 	int ythreads = gridDim.y * blockDim.y; 
 
-	int sum;
+	float sum;
 	for (int i = tidx; i < N; i += xthreads){
 		for (int j = tidy; j < N; j += ythreads){
-			sum = 0;
+			sum = 0.0;
 			for (int k = 0; k < N; k++){
 				sum += A[IDX2D(i, k, N)] * B[IDX2D(k, j, N)];
 			}
@@ -68,6 +68,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
+// TODO - Add timing
 int main(int argc, char* argv[]){
 	// Accept arguments 
 	int N = atoi(argv[1]); // length of matrix side
@@ -96,11 +97,28 @@ int main(int argc, char* argv[]){
 	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y);
 	dim3 grid_dimensions(numberOfSMs * SM_multiplier_x, numberOfSMs * SM_multiplier_y);
 
+	// Set up timer
+	cudaEvent_t start_search, stop_search;
+    cudaEventCreate(&start_search);
+    cudaEventCreate(&stop_search);
+    float time_search;
+
 	// Initialize Matrices
 	InitializeMatrices<<<block_dimensions, grid_dimensions>>>(C, A, B, N, 1234); // Magic number at the end is seed for rng
-	
-	// Perform Matrix Multiplication
-	MatMul<<<block_dimensions, grid_dimensions>>>(C, A, B, N);
+	checkCuda(cudaDeviceSynchronize());
 
+	// Perform Matrix Multiplication
+	cudaEventRecord(start_search, 0);
+	MatMul<<<block_dimensions, grid_dimensions>>>(C, A, B, N);
+	cudaEventRecord(stop_search, 0);
+	cudaEventSynchronize(stop_search);
+	cudaEventElapsedTime(&time_search, start_search, stop_search);
+
+	std::cout << "Elapsed time is: " << time_search << " ms" << std::endl;
+
+	// Free data
+	cudaFree(A);
+	cudaFree(B);
+	cudaFree(C);
 	return 0;
 }
