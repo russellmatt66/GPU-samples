@@ -77,6 +77,7 @@ void hostMatMul(float* C, const float *A, const float *B, const int N, const int
     return;
 }
 
+// This is for zeroing out h_C b/w parallel and sequential CPU run
 void hostSetAllZero(float *C, const int N, const int begin, const int end){
 	// row-major storage
     for (int i = begin; i < end; i++){ 
@@ -103,7 +104,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 TODO 
 (1) Add CPU code for speedup
 	- Add timing
-(2) Cleanup
+(2) Cleanup comments
 */  
 int main(int argc, char* argv[]){
 	// Accept arguments 
@@ -158,6 +159,7 @@ int main(int argc, char* argv[]){
 	checkCuda(cudaMemcpy(h_C, C, requested_matrix_memory, cudaMemcpyDeviceToHost));
 
 	// Perform Matrix Multiplication
+	// GPU kernel, and CPU function, are validated in `../test/validate_matmul.cu`
 	// Device
 	cudaEventRecord(start_search, 0);
 	MatMul<<<block_dimensions, grid_dimensions>>>(C, A, B, N);
@@ -167,7 +169,7 @@ int main(int argc, char* argv[]){
 
 	std::cout << "Elapsed kernel time is: " << time_search << " ms" << std::endl;
 
-	// Host
+	// Host 
 	// Parallel
 	// TODO - Add timing
 	std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/4);
@@ -177,9 +179,18 @@ int main(int argc, char* argv[]){
 
 	t1.join(); t2.join(); t3.join(); t4.join();
 
+	// Zero out h_C in prep for single-threaded run
+	// Spaghetti thread declaration is simpler than creating a ThreadPool class, and I'm not doing THAT much parallel work to justify
+	std::thread z1(hostSetAllZero, h_C, N, 0, N/4);
+	std::thread z2(hostSetAllZero, h_C, N, N/4, N/2);
+	std::thread z3(hostSetAllZero, h_C, N, N/2, 3*N/4);
+	std::thread z4(hostSetAllZero, h_C, N, 3*N/4, N);
+
+	z1.join(); z2.join(); z3.join(); z4.join();
+
 	// Serial
 	// TODO - Add timing
-
+	hostMatMul(h_C, h_A, h_B, N, 0, N);
 
 	// Free data
 	cudaFree(A);
