@@ -63,21 +63,30 @@ __global__ void MatMul(float *C, const float *A, const float *B, const int N){
 /* Host Code */
 void hostMatMul(float* C, const float *A, const float *B, const int N, const int begin, const int end){
     // row-major storage
+    float sum;
     for (int i = begin; i < end; i++){ 
         for (int j = begin; j < end; j++){
-            C[IDX2D(i, j, N)] = A[IDX2D(i, j, N)] * B[IDX2D(i, j, N)];
+            sum = 0.0;
+            for (int k = 0; k < N; k++){
+                sum += A[IDX2D(i, j, N)] * B[IDX2D(i, j, N)];
+            }
+            C[IDX2D(i, j, N)] = sum;
         }
     }
     return;
 }
 
 // Validating on host because arrays get relatively large on GPU, and it's simpler to not have to weave freeing up space with getting work done 
-void hostValidate(const float* d_C, const float *h_C, const int N, bool are_same, const int begin, const int end){
-    are_same = true; // just to be safe
+void hostValidate(const float* d_C, const float *h_C, const int N, bool *are_same, const int begin, const int end){
+    *are_same = true; // don't want compiler optimizing its way through the validation check
+    float threshold = 0.000001;
     for (int i = begin; i < end; i++){
         for (int j = begin; j < end; j++){
-            if (d_C[IDX2D(i, j, N)] != h_C[IDX2D(i, j, N)]){
-                are_same = false;
+            if (abs(d_C[IDX2D(i, j, N)] - h_C[IDX2D(i, j, N)]) > threshold){
+                std::cout << "(i,j) = (" << i << "," << j << ")" << std::endl;
+                std::cout << "d_C = " << d_C[IDX2D(i, j, N)] << std::endl;
+                std::cout << "h_C = " << h_C[IDX2D(i, j, N)] << std::endl;
+                *are_same = false;
                 break;
             }
         }
@@ -148,9 +157,9 @@ int main(int argc, char* argv[]){
     checkCuda(cudaMemcpy(h_A, A, requested_matrix_memory, cudaMemcpyDeviceToHost));
     checkCuda(cudaMemcpy(h_B, B, requested_matrix_memory, cudaMemcpyDeviceToHost));
     checkCuda(cudaMemcpy(h_C, C, requested_matrix_memory, cudaMemcpyDeviceToHost));
+    checkCuda(cudaDeviceSynchronize());
 
     // Perform Matrix Multiplication on Host
-    /* TODO - Add timing to calculate speedup */
     std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/4);
     std::thread t2(hostMatMul, h_C, h_A, h_B, N, N/4, N/2);
 	std::thread t3(hostMatMul, h_C, h_A, h_B, N, N/2, 3*N/4);
@@ -172,21 +181,27 @@ int main(int argc, char* argv[]){
 
     v_C = (float*)malloc(requested_matrix_memory);
     checkCuda(cudaMemcpy(v_C, C, requested_matrix_memory, cudaMemcpyDeviceToHost));
+    checkCuda(cudaDeviceSynchronize());
 
-    bool are_same1 = true, are_same2 = true, are_same3 = true, are_same4 = true; // simpler than using lambdas and <future>
+    bool are_same1, are_same2, are_same3, are_same4; // simpler than using lambdas and <future>
 
-    std::thread v1(hostValidate, v_C, h_C, N, are_same1, 0, N/4);
-    std::thread v2(hostValidate, v_C, h_C, N, are_same2, N/4, N/2);
-    std::thread v3(hostValidate, v_C, h_C, N, are_same3, N/2, 3*N/4);
-    std::thread v4(hostValidate, v_C, h_C, N, are_same4, 3*N/4, N);
+    std::thread v1(hostValidate, v_C, h_C, N, &are_same1, 0, N/4);
+    std::thread v2(hostValidate, v_C, h_C, N, &are_same2, N/4, N/2);
+    std::thread v3(hostValidate, v_C, h_C, N, &are_same3, N/2, 3*N/4);
+    std::thread v4(hostValidate, v_C, h_C, N, &are_same4, 3*N/4, N);
 
     v1.join(); v2.join(); v3.join(); v4.join();
 
-    if (!are_same1 || !are_same2 || !are_same3 || !are_same4){
-        std::cout << "h_C and d_C not the same :( " << std::endl;
+    if (are_same1 && are_same2 && are_same3 && are_same4){
+        std::cout << "h_C and d_C are the same :) " << std::endl;
     }
-
-    std::cout << "h_C and d_C are the same :) " << std::endl;
+    else {
+        std::cout << "h_C and d_C not the same :( " << std::endl;
+        std::cout << "are_same 1 = " << are_same1 << std::endl;
+        std::cout << "are_same 2 = " << are_same2 << std::endl;
+        std::cout << "are_same 3 = " << are_same3 << std::endl;
+        std::cout << "are_same 4 = " << are_same4 << std::endl;
+    }
 
 	// Free data
 	cudaFree(A);

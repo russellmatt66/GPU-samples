@@ -6,14 +6,18 @@ build/
 -
 
 data/
+- 
 
 debug/
+- 
 
 include/
+- CUDA kernels moved to src
 
 src/
 - Currently implements square matrix multiplication. 
 
 test/
+-
 
 machine-learning/
