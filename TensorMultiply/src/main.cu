@@ -9,23 +9,26 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <thread>
 
-// row-major order
-#define IDX3D(i, j, k, N) (k*(pow(N,2)) + i*N + j)
+#include "../include/tensmult.cuh"
+#include "../include/tensmult.cu"
 
-__global__ void TensorMultiply(float *C, const float *A, const float *B, const int N){
-	// TODO - Implement these expressions
-	int tidx = 0;
-	int tidy = 0;
-	int tidz = 0;
-	int xthreads = 0;
-	int ythreads = 0;
-	int zthreads = 0;
-
-	// TODO - Implement tensmult logic
-	
+// https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define checkCuda(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
 }
 
+/* 
+TODO 
+
+*/
 int main(int argc, char* argv){
 	
 	return 0;

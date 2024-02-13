@@ -134,8 +134,8 @@ int main(int argc, char* argv[]){
     cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 
 	// Define execution configuration
-	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y);
-	dim3 grid_dimensions(numberOfSMs * SM_multiplier_x, numberOfSMs * SM_multiplier_y);
+	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y, 1);
+	dim3 grid_dimensions(numberOfSMs * SM_multiplier_x, numberOfSMs * SM_multiplier_y, 1);
 
 	// Set up timer
 	cudaEvent_t start_search, stop_search;
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]){
 	// GPU kernel, and CPU function, are validated in `../test/validate_matmul.cu`
 	// Device
 	cudaEventRecord(start_search, 0);
-	MatMul<<<block_dimensions, grid_dimensions>>>(C, A, B, N);
+	MatMul<<<grid_dimensions, block_dimensions>>>(C, A, B, N);
 	cudaEventRecord(stop_search, 0);
 	cudaEventSynchronize(stop_search);
 	cudaEventElapsedTime(&time_search, start_search, stop_search);
