@@ -14,6 +14,9 @@
 #include "../include/tensmult.cuh"
 #include "../include/tensmult.cu"
 
+// row-major order
+#define IDX3D(i, j, k, N) (k*N*N + i*N + j)
+
 __global__ void Validate(const float* h_C, const float* d_C, const uint64_t N, int* are_same){
     int tidx = threadIdx.x + blockDim.x * blockIdx.x;
     int tidy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -23,11 +26,15 @@ __global__ void Validate(const float* h_C, const float* d_C, const uint64_t N, i
     int zthreads = blockDim.z * gridDim.z;
 
     float threshold = 0.0001;
+    // *are_same = 1;
     for (int i = tidx; i < N; i += xthreads){
         for (int j = tidy; j < N; j += ythreads){
             for (int k = tidz; k < N; k += zthreads){
                 if (abs(h_C[IDX3D(i, j, k, N)] - d_C[IDX3D(i, j, k, N)]) > threshold){
-                    *are_same = -1;
+                    printf("Not within tolerance at (i,j,k) = (%d, %d, %d)\n", i, j, k);
+                    printf("d_C(i,j,k) = %f\n", d_C[IDX3D(i, j, k, N)]);
+                    printf("h_C(i,j,k) = %f\n", h_C[IDX3D(i, j, k, N)]);
+                    *are_same = 0;
                     break;
                 }
             }
@@ -100,21 +107,30 @@ int main(int argc, char* argv[]){
 
     // Perform tensor multiply on host
     int stride = 4;
-    std::thread t1(HostTensorMultiply, h_C, h_A, h_B, 0, stride);
-    std::thread t2(HostTensorMultiply, h_C, h_A, h_B, 1, stride);
-    std::thread t3(HostTensorMultiply, h_C, h_A, h_B, 2, stride);
-    std::thread t4(HostTensorMultiply, h_C, h_A, h_B, 3, stride);
+    std::thread t1(HostTensorMultiply, h_C, h_A, h_B, N, 0, stride);
+    std::thread t2(HostTensorMultiply, h_C, h_A, h_B, N, 1, stride);
+    std::thread t3(HostTensorMultiply, h_C, h_A, h_B, N, 2, stride);
+    std::thread t4(HostTensorMultiply, h_C, h_A, h_B, N, 3, stride);
 
     t1.join(); t2.join(); t3.join(); t4.join();
     
     checkCuda(cudaDeviceSynchronize());
     
-    // Validate
+    // Validate - Seg fault is in here
     int* are_same;
-    cudaMalloc(&are_same, sizeof(int));
+    cudaMallocManaged(&are_same, sizeof(int));
+    *are_same = 1; // Page-faulting for a single int haha
 
     Validate<<<grid_dimensions, block_dimensions>>>(h_C, C, N, are_same);
     checkCuda(cudaDeviceSynchronize());
+
+    if (*are_same){
+        std::cout << "Host and GPU algorithms within tolerance :) " << std::endl;
+    }
+    else {
+        std::cout << *are_same << std::endl;
+        std::cout << "Host and GPU algorithms not within tolerance :( " << std::endl;
+    }
 
     // Free
     cudaFree(A);
