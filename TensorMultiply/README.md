@@ -6,6 +6,9 @@ Matrix (rank-2 tensor) multiplication can be defined in exactly one way, but for
 For example, C_{ijk} = A_{ijl}B_{llk}, is one way to contract (multiply) the two tensors together. The Einstein summation convention applied here sums over repeated indices. What this means in the previous equation, is that we are contracting over the layer (3rd dimension) of A, and the (row/column)diagonal of the kth layer of B, in order to produce the ijk-th element of C.
   
 # Current Tasks
-(1) Build and run `./src/validate.cu`
+(1) Implement code and timing in `./src/main.cu`
+
+# Project Status
+(1) Algorithm successfully implemented, and validated in `./test/validate.cu`
 
 # Directory Structure
