@@ -121,7 +121,7 @@ int main(int argc, char* argv[]){
 	checkCuda(cudaMalloc(&B, requested_matrix_memory));
 	checkCuda(cudaMalloc(&C, requested_matrix_memory));
 
-	std::cout << "Size of matrices is: " << pow(N,2) << std::endl;
+	std::cout << "Size of matrices is = " << pow(N,2) << std::endl;
 
     // Get device attributes 
     int deviceId;
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]){
     cudaGetDevice(&deviceId);
     cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 
-	std::cout << "Number of SMs on device is " << numberOfSMs << std::endl;
+	std::cout << "Number of SMs on device = " << numberOfSMs << std::endl;
 
 	// Define execution configuration
 	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y, 1);
@@ -171,19 +171,23 @@ int main(int argc, char* argv[]){
 	// Host Code
 	// Parallel
 	auto start_host = std::chrono::high_resolution_clock::now();
-	std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/4);
-	std::thread t2(hostMatMul, h_C, h_A, h_B, N, N/4, N/2);
-	std::thread t3(hostMatMul, h_C, h_A, h_B, N, N/2, 3*N/4);
-	std::thread t4(hostMatMul, h_C, h_A, h_B, N, 3*N/4, N);
+	std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/8);
+	std::thread t2(hostMatMul, h_C, h_A, h_B, N, N/8, N/4);
+	std::thread t3(hostMatMul, h_C, h_A, h_B, N, N/4, 3*N/8);
+	std::thread t4(hostMatMul, h_C, h_A, h_B, N, 3*N/8, N/2);
+	std::thread t5(hostMatMul, h_C, h_A, h_B, N, N/2, 5*N/8);
+	std::thread t6(hostMatMul, h_C, h_A, h_B, N, 5*N/8, 3*N/4);
+	std::thread t7(hostMatMul, h_C, h_A, h_B, N, 3*N/4, 7*N/8);
+	std::thread t8(hostMatMul, h_C, h_A, h_B, N, 7*N/8, N);
 
-	t1.join(); t2.join(); t3.join(); t4.join();
+	t1.join(); t2.join(); t3.join(); t4.join(); t5.join(); t6.join(); t7.join(); t8.join();
 
 	auto stop_host = std::chrono::high_resolution_clock::now();
 	auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(stop_host - start_host).count();
 
 	// std::cout << "Elapsed multi-threaded C++ time is: " << elapsed_time << " ms" << std::endl;
 	printf("Elapsed multi-threaded C++ time is = %ld us\n", elapsed_time);
-	std::cout << "Number of CPU cores = " << 4 << std::endl; 
+	std::cout << "Number of CPU cores = " << 8 << std::endl; 
 
 	// Free data
 	cudaFree(A);
