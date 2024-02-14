@@ -26,7 +26,7 @@ for multiplier_x in SM_multipliers_x:
 # print(len(exec_configs))
 # print(len(exec_configs) * len(N))
 
-def make_directory(data_location: str, N: int) -> None:
+def makeDirectory(data_location: str, N: int) -> None:
     dir_name = data_location + "N" + str(N)
     try: 
         os.mkdir(dir_name)
@@ -37,28 +37,36 @@ def make_directory(data_location: str, N: int) -> None:
         print(f"An error occurred: {e}")
     return
 
-def initialize_data_dict(features: list[str]) -> dict:
+def initializeDataDict(features: list[str]) -> dict:
     data_dict = {}
     for feature in features:
         data_dict[feature] = []
     return data_dict
 
+def parseSTDOUT(stdout: str) -> dict:
+    parse_dict = {}
+    # TODO - Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout 
+    return parse_dict
+
 # Call ./matmul, capture timing output, and store in the appropriate location
-num_runs = int(argv[1])
+num_runs = int(sys.argv[1])
 data_location = '../data/'
-features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y']
+features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime', 'host_runtime']
 
 for N in N_sizes:
-    data_dict = initialize_data_dict(features)
-    make_directory(data_location, N)
+    data_dict = initializeDataDict(features)
+    makeDirectory(data_location, N)
     for exec_config in exec_configs:
         SM_mult_x = exec_config[0]
         SM_mult_y = exec_config[1]
         num_threads_per_x = exec_config[2]
         num_threads_per_y = exec_config[3]
         for nrun in range(1, num_runs + 1):
-            matmulResult = subprocess.run('../build/matmul', capture_output=True, shell=True, text=True)
-            print(matmulResult.stdout)
+            matmulResult = subprocess.run(['../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_blocks_x), str(num_threads_per_blocks_y)],
+                                          capture_output=True, text=True)
+            print("STDOUT:", matmulResult.stdout)
+            # TODO - call parseSTDOUT(matmulResult.stdout), and add data to data_dict, then create a dataframe for the case, and save it to appropriate storage location
+            # print("STDERR:", matmulResult.stderr)
 
 # benchmarking_df = pd.DataFrame(data_dict)
 # benchmarking_df.to_csv('../data/benchmarking-data')

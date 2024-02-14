@@ -166,7 +166,7 @@ int main(int argc, char* argv[]){
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&time, start, stop);
 
-	std::cout << "Elapsed CUDA kernel time is: " << time << " ms" << std::endl;
+	std::cout << "Elapsed CUDA kernel time is = " << time << " ms" << std::endl;
 
 	// Host Code
 	// Parallel
@@ -179,9 +179,10 @@ int main(int argc, char* argv[]){
 	t1.join(); t2.join(); t3.join(); t4.join();
 
 	auto stop_host = std::chrono::high_resolution_clock::now();
-	auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(stop_host - start_host).count();
+	auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(stop_host - start_host).count();
 
-	std::cout << "Elapsed multi-threaded C++ time is: " << elapsed_time << " ms" << std::endl;
+	// std::cout << "Elapsed multi-threaded C++ time is: " << elapsed_time << " ms" << std::endl;
+	printf("Elapsed multi-threaded C++ time is = %ld us\n", elapsed_time);
 	std::cout << "Number of CPU cores = " << 4 << std::endl; 
 
 	// Free data
