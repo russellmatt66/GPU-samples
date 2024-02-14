@@ -75,7 +75,7 @@ num_runs = int(sys.argv[1])
 data_location = '../data/'
 features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
 
-# TODO - multi-thread this
+# TODO - multi-thread this (?)
 for N in N_sizes:
     data_dict = initializeDataDict(features) # Initialize each value to be an empty list
     dir_name = makeDirectory(data_location, N)
@@ -85,6 +85,7 @@ for N in N_sizes:
         num_threads_per_x = exec_config[2]
         num_threads_per_y = exec_config[3]
         print(f"Running N={N}, SM_mult_x={SM_mult_x}, SM_mult_y={SM_mult_y}, num_threads_per_x={num_threads_per_x}, num_threads_per_y={num_threads_per_y}")
+        # TODO - Implement the multi-threading at this location?
         for nrun in range(1, num_runs + 1):
             print(f"nrun={nrun}")
             matmulResult = subprocess.run(['../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
