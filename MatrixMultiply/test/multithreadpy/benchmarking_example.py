@@ -3,8 +3,9 @@ import subprocess
 import pandas as pd
 import os
 
-# TODO - This needs some more work, but the core idea is for each N, do parallel work for the benchmarking
-
+'''
+THINK IT'S DONE
+'''
 # Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout 
 def parseSTDOUT(stdout: str) -> dict:
     parse_dict = {}
@@ -32,7 +33,8 @@ def initializeDataDict(data_dict: dict) -> dict:
 
 # Run `matmul`, and collect data into dict
 def runMatmul(N: int, exec_config: tuple, nruns: int) -> dict:
-    data_dict = initializeDataDict({})
+    data_dict = {}
+    data_dict = initializeDataDict(data_dict)
     SM_mult_x = exec_config[0]
     SM_mult_y = exec_config[1]
     num_threads_per_x = exec_config[2]
@@ -60,13 +62,16 @@ def processN(N: int, exec_configs: list[tuple], nruns: int, thread_count: int, d
         futures = [executor.submit(runMatmul, N, config, nruns) for config in exec_configs]
 
         # Wait for all tasks to complete using as_completed
-        raw_df = pd.DataFrame()
+        raw_dict = {}
+        raw_dict = initializeDataDict(raw_dict)
+        raw_df = pd.DataFrame(raw_dict)
         for future in concurrent.futures.as_completed(futures):
             # Get, and merge, the benchmarking data of all the workers
             worker_df = pd.DataFrame(future.result())
-            raw_df.merge(worker_df)
+            # print(worker_df)
+            raw_df = pd.concat([raw_df, worker_df], ignore_index=True)
             # print(result)
-        raw_df.to_csv(dir_name + 'raw.csv')
+        raw_df.to_csv(dir_name + 'raw.csv', index=False)
 
 '''
 CONFIGURATION
@@ -77,8 +82,8 @@ max_N = 5 # RTX 2060 limit (~6.0 GB GDDR6)
 N_sizes = [2**i for i in range(min_N, max_N + 1)]
 
 # Define a configuration space
-SM_multipliers_x = [2**i for i in range(7)] # This multiplies the number of device SMs (30 for RTX 2060) to give number of blocks 
-SM_multipliers_y = [2**i for i in range(7)]
+SM_multipliers_x = [2**i for i in range(6)] # This multiplies the number of device SMs (30 for RTX 2060) to give number of blocks 
+SM_multipliers_y = [2**i for i in range(6)]
 num_threads_per_blocks_x = [2**i for i in range(5, 11)] # [32, 64, 128, 256, 512, 1024] 
 num_threads_per_blocks_y = [2**i for i in range(5, 11)]
 
@@ -110,7 +115,7 @@ for N in N_sizes:
 
 # Configure thread team, and number of runs
 threads = 8
-num_runs = threads * 4
+num_runs = 1
 
 print("Calling thread team")
 for N in N_sizes: 
