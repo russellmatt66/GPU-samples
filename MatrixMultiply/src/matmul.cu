@@ -14,12 +14,13 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <chrono>
 
 // row-major order
 #define IDX2D(i, j, N) (((i)*(N))+(j))
 
 /* Device code */
-__global__ void InitializeMatrices(float *C, float *A, float *B, const int N, const unsigned long long seed){
+__global__ void InitializeMatrices(float *C, float *A, float *B, const uint64_t N, const unsigned long long seed){
 	int tidx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tidy = threadIdx.y + blockIdx.y * blockDim.y; 
 	int xthreads = gridDim.x * blockDim.x;
@@ -41,7 +42,7 @@ __global__ void InitializeMatrices(float *C, float *A, float *B, const int N, co
 	return;
 }
 
-__global__ void MatMul(float *C, const float *A, const float *B, const int N){ 
+__global__ void MatMul(float *C, const float *A, const float *B, const uint64_t N){ 
 	int tidx = threadIdx.x + blockIdx.x * blockDim.x;
 	int tidy = threadIdx.y + blockIdx.y * blockDim.y; 
 	int xthreads = gridDim.x * blockDim.x;
@@ -61,8 +62,7 @@ __global__ void MatMul(float *C, const float *A, const float *B, const int N){
 } 
 
 /* Host code */
-// TODO - Add CPU code for obtaining speedup (both single-threaded, and parallel)
-void hostMatMul(float* C, const float *A, const float *B, const int N, const int begin, const int end){
+void hostMatMul(float* C, const float *A, const float *B, const uint64_t N, const int begin, const int end){
     // row-major storage
     float sum;
     for (int i = begin; i < end; i++){ 
@@ -78,7 +78,7 @@ void hostMatMul(float* C, const float *A, const float *B, const int N, const int
 }
 
 // This is for zeroing out h_C b/w parallel and sequential CPU run
-void hostSetAllZero(float *C, const int N, const int begin, const int end){
+void hostSetAllZero(float *C, const uint64_t N, const int begin, const int end){
 	// row-major storage
     for (int i = begin; i < end; i++){ 
         for (int j = begin; j < end; j++){
@@ -102,13 +102,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 /* 
 TODO 
-(1) Add CPU code for speedup
-	- Add timing
-(2) Cleanup comments
+(1) Cleanup comments
 */  
 int main(int argc, char* argv[]){
 	// Accept arguments 
-	// int N = atoi(argv[1]); // length of matrix side - CHECK IF THIS IS CAUSING BUG
 	uint64_t N = atoll(argv[1]);
 	int SM_multiplier_x = atoi(argv[2]); // used for changing number of blocks
 	int SM_multiplier_y = atoi(argv[3]);
@@ -133,15 +130,17 @@ int main(int argc, char* argv[]){
     cudaGetDevice(&deviceId);
     cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceId);
 
+	std::cout << "Number of SMs on device is " << numberOfSMs << std::endl;
+
 	// Define execution configuration
 	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y, 1);
 	dim3 grid_dimensions(numberOfSMs * SM_multiplier_x, numberOfSMs * SM_multiplier_y, 1);
 
 	// Set up timer
-	cudaEvent_t start_search, stop_search;
-    cudaEventCreate(&start_search);
-    cudaEventCreate(&stop_search);
-    float time_search;
+	cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float time;
 
 	// Initialize Matrices
 	InitializeMatrices<<<block_dimensions, grid_dimensions>>>(C, A, B, N, 1234); // Magic number at the end is seed for rng
@@ -161,17 +160,17 @@ int main(int argc, char* argv[]){
 	// Perform Matrix Multiplication
 	// GPU kernel, and CPU function, are validated in `../test/validate_matmul.cu`
 	// Device
-	cudaEventRecord(start_search, 0);
+	cudaEventRecord(start, 0);
 	MatMul<<<grid_dimensions, block_dimensions>>>(C, A, B, N);
-	cudaEventRecord(stop_search, 0);
-	cudaEventSynchronize(stop_search);
-	cudaEventElapsedTime(&time_search, start_search, stop_search);
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&time, start, stop);
 
-	std::cout << "Elapsed kernel time is: " << time_search << " ms" << std::endl;
+	std::cout << "Elapsed CUDA kernel time is: " << time << " ms" << std::endl;
 
-	// Host 
+	// Host Code
 	// Parallel
-	// TODO - Add timing
+	auto start_host = std::chrono::high_resolution_clock::now();
 	std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/4);
 	std::thread t2(hostMatMul, h_C, h_A, h_B, N, N/4, N/2);
 	std::thread t3(hostMatMul, h_C, h_A, h_B, N, N/2, 3*N/4);
@@ -179,18 +178,11 @@ int main(int argc, char* argv[]){
 
 	t1.join(); t2.join(); t3.join(); t4.join();
 
-	// Zero out h_C in prep for single-threaded run
-	// Spaghetti thread declaration is simpler than creating a ThreadPool class, and I'm not doing THAT much parallel work to justify
-	std::thread z1(hostSetAllZero, h_C, N, 0, N/4);
-	std::thread z2(hostSetAllZero, h_C, N, N/4, N/2);
-	std::thread z3(hostSetAllZero, h_C, N, N/2, 3*N/4);
-	std::thread z4(hostSetAllZero, h_C, N, 3*N/4, N);
+	auto stop_host = std::chrono::high_resolution_clock::now();
+	auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(stop_host - start_host).count();
 
-	z1.join(); z2.join(); z3.join(); z4.join();
-
-	// Serial
-	// TODO - Add timing
-	hostMatMul(h_C, h_A, h_B, N, 0, N);
+	std::cout << "Elapsed multi-threaded C++ time is: " << elapsed_time << " ms" << std::endl;
+	std::cout << "Number of CPU cores = " << 4 << std::endl; 
 
 	// Free data
 	cudaFree(A);
