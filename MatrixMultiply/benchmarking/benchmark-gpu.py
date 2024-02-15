@@ -9,7 +9,7 @@ import time
 CONFIGURATION
 '''
 # Define a problem space
-min_N = 5
+min_N = 4
 max_N = 14 # RTX 2060 limit (~6.0 GB GDDR6)
 N_sizes = [2**i for i in range(min_N, max_N + 1)]
 
@@ -56,23 +56,24 @@ def initializeDataDict(data_dict: dict) -> dict:
         data_dict[feature] = []
     return data_dict
 
+# TODO - Refactor this for GPU-only benchmarking
 # Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout 
 def parseSTDOUT(stdout: str) -> dict:
     parse_dict = {}
     # TODO - Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout
     newlinesplit = stdout.split('\n')
     # print(newlinesplit) 
-    # YEP, this is hard-coded with some magic numbers that depend on the output of `../build/matmul`
+    # YEP, this is hard-coded with some magic numbers that depend on the output of `../build/gpu_matmul`
     # It has to be
     line_numberOfSMs = newlinesplit[1]
     line_CUDAruntime = newlinesplit[2]
-    line_CPUMTruntime = newlinesplit[3]
+    # line_CPUMTruntime = newlinesplit[3]
     numberOfSMs = int(line_numberOfSMs.split('=')[1])
     device_runtime = float(line_CUDAruntime.split('=')[1].split('ms')[0])
-    host_runtime = float(line_CPUMTruntime.split('=')[1].split('us')[0])
+    # host_runtime = float(line_CPUMTruntime.split('=')[1].split('us')[0])
     parse_dict['numberOfSMs'] = numberOfSMs
     parse_dict['device_runtime'] = device_runtime
-    parse_dict['host_runtime'] = host_runtime # Currently in [us]
+    # parse_dict['host_runtime'] = host_runtime # Currently in [us]
     return parse_dict
 
 # Run `matmul`, and collect data into dict
@@ -86,7 +87,7 @@ def runMatmul(N: int, exec_config: tuple, nruns: int) -> dict:
     for i in range(1, nruns + 1):
         print(f"Running N={N}, SM_mult_x={SM_mult_x}, SM_mult_y={SM_mult_y}, num_threads_per_x={num_threads_per_x}, num_threads_per_y={num_threads_per_y}")
         print(f"nrun={i}")
-        result = subprocess.run(['../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
+        result = subprocess.run(['../build/gpu_matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
             capture_output=True, text=True)
         # Parse the output or perform any other processing as needed
         parse_dict = parseSTDOUT(result.stdout)
@@ -97,25 +98,26 @@ def runMatmul(N: int, exec_config: tuple, nruns: int) -> dict:
         data_dict['num_threads_per_x'].append(num_threads_per_x)
         data_dict['num_threads_per_y'].append(num_threads_per_y)
         data_dict['device_runtime [ms]'].append(parse_dict['device_runtime'])
-        data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
+        # data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
     return data_dict
 
-def processN(N: int, exec_configs: list[tuple], nruns: int, thread_count: int, dir_name: str) -> pd.DataFrame:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=thread_count) as executor:
-        # Use list comprehension to create a list of futures
-        futures = [executor.submit(runMatmul, N, config, nruns) for config in exec_configs]
+# Don't need to multi-thread the GPU benchmarking - in fact you can't, at least not for very long, because device will run out of memory
+# def processN(N: int, exec_configs: list[tuple], nruns: int, thread_count: int, dir_name: str) -> pd.DataFrame:
+#     with concurrent.futures.ThreadPoolExecutor(max_workers=thread_count) as executor:
+#         # Use list comprehension to create a list of futures
+#         futures = [executor.submit(runMatmul, N, config, nruns) for config in exec_configs]
 
-        # Wait for all tasks to complete using as_completed
-        raw_dict = {}
-        raw_dict = initializeDataDict(raw_dict)
-        raw_df = pd.DataFrame(raw_dict)
-        for future in concurrent.futures.as_completed(futures):
-            # Get, and merge, the benchmarking data of all the workers
-            worker_df = pd.DataFrame(future.result())
-            # print(worker_df)
-            raw_df = pd.concat([raw_df, worker_df], ignore_index=True)
-            # print(result)
-        raw_df.to_csv(dir_name + 'raw.csv', index=False)
+#         # Wait for all tasks to complete using as_completed
+#         raw_dict = {}
+#         raw_dict = initializeDataDict(raw_dict)
+#         raw_df = pd.DataFrame(raw_dict)
+#         for future in concurrent.futures.as_completed(futures):
+#             # Get, and merge, the benchmarking data of all the workers
+#             worker_df = pd.DataFrame(future.result())
+#             # print(worker_df)
+#             raw_df = pd.concat([raw_df, worker_df], ignore_index=True)
+#             # print(result)
+#         raw_df.to_csv(dir_name + 'raw.csv', index=False)
 
 
 '''
@@ -132,45 +134,45 @@ dir_names = [] # Just storing these for good measure
 for N in N_sizes:
     dir_names.append(makeDirectory(data_location, N))
 
-print("Calling thread team")
-start_time = time.time()
-for N in N_sizes: 
-    dir_name = data_location + "N" + str(N) + '/'
-    processN(N, exec_configs, num_runs, threads, dir_name)
-end_time = time.time()
-elapsed_time = end_time - start_time
-print("Benchmarking took {elapsed_time} seconds")
+# print("Calling thread team")
+# start_time = time.time()
+# for N in N_sizes: 
+#     dir_name = data_location + "N" + str(N) + '/'
+#     processN(N, exec_configs, num_runs, threads, dir_name)
+# end_time = time.time()
+# elapsed_time = end_time - start_time
+# print("Benchmarking took {elapsed_time} seconds")
 
 # TODO - multi-thread this 
-# for N in N_sizes:
-#     data_dict = initializeDataDict(features) # Initialize each value to be an empty list
-#     dir_name = makeDirectory(data_location, N)
-#     for exec_config in exec_configs:
-#         SM_mult_x = exec_config[0]
-#         SM_mult_y = exec_config[1]
-#         num_threads_per_x = exec_config[2]
-#         num_threads_per_y = exec_config[3]
-#         print(f"Running N={N}, SM_mult_x={SM_mult_x}, SM_mult_y={SM_mult_y}, num_threads_per_x={num_threads_per_x}, num_threads_per_y={num_threads_per_y}")
-#         # TODO - Implement the multi-threading at this location?
-#         for nrun in range(1, num_runs + 1):
-#             print(f"nrun={nrun}")
-#             matmulResult = subprocess.run(['../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
-#                                           capture_output=True, text=True)
-#             # print("STDOUT:", matmulResult.stdout)
-#             # TODO - call parseSTDOUT(matmulResult.stdout), and add data to data_dict, then create a dataframe for the case, and save it to appropriate storage location
-#             parse_dict = parseSTDOUT(matmulResult.stdout)
-#             data_dict['num_run'].append(nrun)
-#             data_dict['N'].append(N)
-#             data_dict['num_blocks_x'].append(SM_mult_x * parse_dict['numberOfSMs'])
-#             data_dict['num_blocks_y'].append(SM_mult_y * parse_dict['numberOfSMs'])
-#             data_dict['num_threads_per_x'].append(num_threads_per_x)
-#             data_dict['num_threads_per_y'].append(num_threads_per_y)
-#             data_dict['device_runtime [ms]'].append(parse_dict['device_runtime'])
-#             data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
-#         print('')
-#     print('Saving run to ' + dir_name + '/raw.csv\n')
-#     benchmarking_df = pd.DataFrame(data_dict)    
-#     benchmarking_df.to_csv(dir_name + '/raw.csv', index=False)
+for N in N_sizes:
+    data_dict = initializeDataDict(features) # Initialize each value to be an empty list
+    dir_name = makeDirectory(data_location, N)
+    for exec_config in exec_configs:
+        SM_mult_x = exec_config[0]
+        SM_mult_y = exec_config[1]
+        num_threads_per_x = exec_config[2]
+        num_threads_per_y = exec_config[3]
+        print(f"Running N={N}, SM_mult_x={SM_mult_x}, SM_mult_y={SM_mult_y}, num_threads_per_x={num_threads_per_x}, num_threads_per_y={num_threads_per_y}")
+        # TODO - Implement the multi-threading at this location?
+        for nrun in range(1, num_runs + 1):
+            print(f"nrun={nrun}")
+            matmulResult = subprocess.run(['../build/gpu_matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
+                                          capture_output=True, text=True)
+            # print("STDOUT:", matmulResult.stdout)
+            # TODO - call parseSTDOUT(matmulResult.stdout), and add data to data_dict, then create a dataframe for the case, and save it to appropriate storage location
+            parse_dict = parseSTDOUT(matmulResult.stdout)
+            data_dict['num_run'].append(nrun)
+            data_dict['N'].append(N)
+            data_dict['num_blocks_x'].append(SM_mult_x * parse_dict['numberOfSMs'])
+            data_dict['num_blocks_y'].append(SM_mult_y * parse_dict['numberOfSMs'])
+            data_dict['num_threads_per_x'].append(num_threads_per_x)
+            data_dict['num_threads_per_y'].append(num_threads_per_y)
+            data_dict['device_runtime [ms]'].append(parse_dict['device_runtime'])
+            # data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
+        print('')
+    print('Saving run to ' + dir_name + '/raw.csv\n')
+    benchmarking_df = pd.DataFrame(data_dict)    
+    benchmarking_df.to_csv(dir_name + '/gpu_raw.csv', index=False)
 
-# benchmarking_df = pd.DataFrame(data_dict)
-# benchmarking_df.to_csv('../data/benchmarking-data')
+benchmarking_df = pd.DataFrame(data_dict)
+benchmarking_df.to_csv('../data/benchmarking-data')

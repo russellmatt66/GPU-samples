@@ -61,32 +61,32 @@ __global__ void MatMul(float *C, const float *A, const float *B, const uint64_t 
 	return;
 } 
 
-/* Host code */
-void hostMatMul(float* C, const float *A, const float *B, const uint64_t N, const int begin, const int end){
-    // row-major storage
-    float sum;
-    for (int i = begin; i < end; i++){ 
-        for (int j = begin; j < end; j++){
-            sum = 0.0;
-            for (int k = 0; k < N; k++){
-                sum += A[IDX2D(i, j, N)] * B[IDX2D(i, j, N)];
-            }
-            C[IDX2D(i, j, N)] = sum;
-        }
-    }
-    return;
-}
+// /* Host code */
+// void hostMatMul(float* C, const float *A, const float *B, const uint64_t N, const int begin, const int end){
+//     // row-major storage
+//     float sum;
+//     for (int i = begin; i < end; i++){ 
+//         for (int j = begin; j < end; j++){
+//             sum = 0.0;
+//             for (int k = 0; k < N; k++){
+//                 sum += A[IDX2D(i, j, N)] * B[IDX2D(i, j, N)];
+//             }
+//             C[IDX2D(i, j, N)] = sum;
+//         }
+//     }
+//     return;
+// }
 
-// This is for zeroing out h_C b/w parallel and sequential CPU run
-void hostSetAllZero(float *C, const uint64_t N, const int begin, const int end){
-	// row-major storage
-    for (int i = begin; i < end; i++){ 
-        for (int j = begin; j < end; j++){
-            C[IDX2D(i, j, N)] = 0.0;
-        }
-    }
-    return;
-}
+// // This is for zeroing out h_C b/w parallel and sequential CPU run
+// void hostSetAllZero(float *C, const uint64_t N, const int begin, const int end){
+// 	// row-major storage
+//     for (int i = begin; i < end; i++){ 
+//         for (int j = begin; j < end; j++){
+//             C[IDX2D(i, j, N)] = 0.0;
+//         }
+//     }
+//     return;
+// }
 
 
 // https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
@@ -102,7 +102,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 /* 
 TODO 
-(1) Cleanup comments
+(1) Refactor the CPU part out of this
 */  
 int main(int argc, char* argv[]){
 	// Accept arguments 
@@ -146,19 +146,8 @@ int main(int argc, char* argv[]){
 	InitializeMatrices<<<block_dimensions, grid_dimensions>>>(C, A, B, N, 1234); // Magic number at the end is seed for rng
 	checkCuda(cudaDeviceSynchronize());
 
-	// Allocate host matrices
-	float *h_A, *h_B, *h_C;
-
-	h_A = (float*)malloc(requested_matrix_memory);
-	h_B = (float*)malloc(requested_matrix_memory);
-	h_C = (float*)malloc(requested_matrix_memory);
-
-	checkCuda(cudaMemcpy(h_A, A, requested_matrix_memory, cudaMemcpyDeviceToHost));
-	checkCuda(cudaMemcpy(h_B, B, requested_matrix_memory, cudaMemcpyDeviceToHost));
-	checkCuda(cudaMemcpy(h_C, C, requested_matrix_memory, cudaMemcpyDeviceToHost));
-
 	// Perform Matrix Multiplication
-	// GPU kernel, and CPU function, are validated in `../test/validate_matmul.cu`
+	// GPU kernel is validated in `../test/validate_matmul.cu`
 	// Device
 	cudaEventRecord(start, 0);
 	MatMul<<<grid_dimensions, block_dimensions>>>(C, A, B, N);
@@ -168,33 +157,10 @@ int main(int argc, char* argv[]){
 
 	std::cout << "Elapsed CUDA kernel time is = " << time << " ms" << std::endl;
 
-	// Host Code
-	// Parallel
-	auto start_host = std::chrono::high_resolution_clock::now();
-	std::thread t1(hostMatMul, h_C, h_A, h_B, N, 0, N/8);
-	std::thread t2(hostMatMul, h_C, h_A, h_B, N, N/8, N/4);
-	std::thread t3(hostMatMul, h_C, h_A, h_B, N, N/4, 3*N/8);
-	std::thread t4(hostMatMul, h_C, h_A, h_B, N, 3*N/8, N/2);
-	std::thread t5(hostMatMul, h_C, h_A, h_B, N, N/2, 5*N/8);
-	std::thread t6(hostMatMul, h_C, h_A, h_B, N, 5*N/8, 3*N/4);
-	std::thread t7(hostMatMul, h_C, h_A, h_B, N, 3*N/4, 7*N/8);
-	std::thread t8(hostMatMul, h_C, h_A, h_B, N, 7*N/8, N);
-
-	t1.join(); t2.join(); t3.join(); t4.join(); t5.join(); t6.join(); t7.join(); t8.join();
-
-	auto stop_host = std::chrono::high_resolution_clock::now();
-	auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(stop_host - start_host).count();
-
-	// std::cout << "Elapsed multi-threaded C++ time is: " << elapsed_time << " ms" << std::endl;
-	printf("Elapsed multi-threaded C++ time is = %ld us\n", elapsed_time);
-	std::cout << "Number of CPU cores = " << 8 << std::endl; 
-
 	// Free data
 	cudaFree(A);
 	cudaFree(B);
 	cudaFree(C);
-	free(h_A);
-	free(h_B);
-	free(h_C);
+
 	return 0;
 }

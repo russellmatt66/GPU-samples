@@ -1,3 +1,3 @@
 # Directory Structure
-benchmark-gpu.py
-- Python 
+benchmark-gpu.py (WIP)
+- Python driver for the benchmarking
