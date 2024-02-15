@@ -3,12 +3,13 @@ import os
 import subprocess
 import pandas as pd
 import concurrent.futures
+import time 
 
 '''
 CONFIGURATION
 '''
 # Define a problem space
-min_N = 4
+min_N = 5
 max_N = 14 # RTX 2060 limit (~6.0 GB GDDR6)
 N_sizes = [2**i for i in range(min_N, max_N + 1)]
 
@@ -44,8 +45,13 @@ def makeDirectory(data_location: str, N: int) -> str:
         print(f"An error occurred: {e}")
     return dir_name
 
-def initializeDataDict(features: list[str]) -> dict:
-    data_dict = {}
+# def initializeDataDict(features: list[str]) -> dict:
+#     data_dict = {}
+#     for feature in features:
+#         data_dict[feature] = []
+#     return data_dict
+def initializeDataDict(data_dict: dict) -> dict:
+    features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
     for feature in features:
         data_dict[feature] = []
     return data_dict
@@ -80,7 +86,7 @@ def runMatmul(N: int, exec_config: tuple, nruns: int) -> dict:
     for i in range(1, nruns + 1):
         print(f"Running N={N}, SM_mult_x={SM_mult_x}, SM_mult_y={SM_mult_y}, num_threads_per_x={num_threads_per_x}, num_threads_per_y={num_threads_per_y}")
         print(f"nrun={i}")
-        result = subprocess.run(['../../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
+        result = subprocess.run(['../build/matmul', str(N), str(SM_mult_x), str(SM_mult_y), str(num_threads_per_x), str(num_threads_per_y)],
             capture_output=True, text=True)
         # Parse the output or perform any other processing as needed
         parse_dict = parseSTDOUT(result.stdout)
@@ -127,9 +133,13 @@ for N in N_sizes:
     dir_names.append(makeDirectory(data_location, N))
 
 print("Calling thread team")
+start_time = time.time()
 for N in N_sizes: 
     dir_name = data_location + "N" + str(N) + '/'
     processN(N, exec_configs, num_runs, threads, dir_name)
+end_time = time.time()
+elapsed_time = end_time - start_time
+print("Benchmarking took {elapsed_time} seconds")
 
 # TODO - multi-thread this 
 # for N in N_sizes:
