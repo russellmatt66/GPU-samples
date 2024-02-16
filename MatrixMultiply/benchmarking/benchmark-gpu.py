@@ -51,7 +51,7 @@ def makeDirectory(data_location: str, N: int) -> str:
 #         data_dict[feature] = []
 #     return data_dict
 def initializeDataDict(data_dict: dict) -> dict:
-    features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
+    features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]']
     for feature in features:
         data_dict[feature] = []
     return data_dict
@@ -67,13 +67,10 @@ def parseSTDOUT(stdout: str) -> dict:
     # It has to be
     line_numberOfSMs = newlinesplit[1]
     line_CUDAruntime = newlinesplit[2]
-    # line_CPUMTruntime = newlinesplit[3]
     numberOfSMs = int(line_numberOfSMs.split('=')[1])
     device_runtime = float(line_CUDAruntime.split('=')[1].split('ms')[0])
-    # host_runtime = float(line_CPUMTruntime.split('=')[1].split('us')[0])
     parse_dict['numberOfSMs'] = numberOfSMs
     parse_dict['device_runtime'] = device_runtime
-    # parse_dict['host_runtime'] = host_runtime # Currently in [us]
     return parse_dict
 
 # Run `matmul`, and collect data into dict
@@ -98,27 +95,7 @@ def runMatmul(N: int, exec_config: tuple, nruns: int) -> dict:
         data_dict['num_threads_per_x'].append(num_threads_per_x)
         data_dict['num_threads_per_y'].append(num_threads_per_y)
         data_dict['device_runtime [ms]'].append(parse_dict['device_runtime'])
-        # data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
     return data_dict
-
-# Don't need to multi-thread the GPU benchmarking - in fact you can't, at least not for very long, because device will run out of memory
-# def processN(N: int, exec_configs: list[tuple], nruns: int, thread_count: int, dir_name: str) -> pd.DataFrame:
-#     with concurrent.futures.ThreadPoolExecutor(max_workers=thread_count) as executor:
-#         # Use list comprehension to create a list of futures
-#         futures = [executor.submit(runMatmul, N, config, nruns) for config in exec_configs]
-
-#         # Wait for all tasks to complete using as_completed
-#         raw_dict = {}
-#         raw_dict = initializeDataDict(raw_dict)
-#         raw_df = pd.DataFrame(raw_dict)
-#         for future in concurrent.futures.as_completed(futures):
-#             # Get, and merge, the benchmarking data of all the workers
-#             worker_df = pd.DataFrame(future.result())
-#             # print(worker_df)
-#             raw_df = pd.concat([raw_df, worker_df], ignore_index=True)
-#             # print(result)
-#         raw_df.to_csv(dir_name + 'raw.csv', index=False)
-
 
 '''
 BENCHMARKING CODE
@@ -128,24 +105,15 @@ BENCHMARKING CODE
 threads = 8
 num_runs = int(sys.argv[1])
 data_location = '../data/'
-features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
+# features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
 
 dir_names = [] # Just storing these for good measure 
 for N in N_sizes:
     dir_names.append(makeDirectory(data_location, N))
 
-# print("Calling thread team")
-# start_time = time.time()
-# for N in N_sizes: 
-#     dir_name = data_location + "N" + str(N) + '/'
-#     processN(N, exec_configs, num_runs, threads, dir_name)
-# end_time = time.time()
-# elapsed_time = end_time - start_time
-# print("Benchmarking took {elapsed_time} seconds")
-
-# TODO - multi-thread this 
 for N in N_sizes:
-    data_dict = initializeDataDict(features) # Initialize each value to be an empty list
+    data_dict = {}
+    data_dict = initializeDataDict(data_dict) # Initialize each value to be an empty list
     dir_name = makeDirectory(data_location, N)
     for exec_config in exec_configs:
         SM_mult_x = exec_config[0]
@@ -168,7 +136,6 @@ for N in N_sizes:
             data_dict['num_threads_per_x'].append(num_threads_per_x)
             data_dict['num_threads_per_y'].append(num_threads_per_y)
             data_dict['device_runtime [ms]'].append(parse_dict['device_runtime'])
-            # data_dict['host_runtime [ms]'].append(parse_dict['host_runtime'] * 10**-3) # converting [us] to [ms]
         print('')
     print('Saving run to ' + dir_name + '/raw.csv\n')
     benchmarking_df = pd.DataFrame(data_dict)    

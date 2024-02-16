@@ -61,34 +61,6 @@ __global__ void MatMul(float *C, const float *A, const float *B, const uint64_t 
 	return;
 } 
 
-// /* Host code */
-// void hostMatMul(float* C, const float *A, const float *B, const uint64_t N, const int begin, const int end){
-//     // row-major storage
-//     float sum;
-//     for (int i = begin; i < end; i++){ 
-//         for (int j = begin; j < end; j++){
-//             sum = 0.0;
-//             for (int k = 0; k < N; k++){
-//                 sum += A[IDX2D(i, j, N)] * B[IDX2D(i, j, N)];
-//             }
-//             C[IDX2D(i, j, N)] = sum;
-//         }
-//     }
-//     return;
-// }
-
-// // This is for zeroing out h_C b/w parallel and sequential CPU run
-// void hostSetAllZero(float *C, const uint64_t N, const int begin, const int end){
-// 	// row-major storage
-//     for (int i = begin; i < end; i++){ 
-//         for (int j = begin; j < end; j++){
-//             C[IDX2D(i, j, N)] = 0.0;
-//         }
-//     }
-//     return;
-// }
-
-
 // https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
 #define checkCuda(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -102,7 +74,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 /* 
 TODO 
-(1) Refactor the CPU part out of this
 */  
 int main(int argc, char* argv[]){
 	// Accept arguments 

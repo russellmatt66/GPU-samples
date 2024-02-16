@@ -9,7 +9,7 @@ import time
 CONFIGURATION
 '''
 # Define a problem space
-min_N = 5
+min_N = 4
 max_N = 14 # RTX 2060 limit (~6.0 GB GDDR6)
 N_sizes = [2**i for i in range(min_N, max_N + 1)]
 
@@ -28,7 +28,7 @@ def makeDirectory(data_location: str, N: int) -> str:
     return dir_name
 
 def initializeDataDict(data_dict: dict) -> dict:
-    features = ['num_run', 'N', 'num_blocks_x', 'num_blocks_y', 'num_threads_per_x', 'num_threads_per_y', 'device_runtime [ms]', 'host_runtime [ms]']
+    features = ['num_run', 'N', 'host_runtime [ms]']
     for feature in features:
         data_dict[feature] = []
     return data_dict
@@ -37,24 +37,18 @@ def initializeDataDict(data_dict: dict) -> dict:
 #  Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout 
 def parseSTDOUT(stdout: str) -> dict:
     parse_dict = {}
-    # TODO - Obtain `numberOfSMs`, `device_runtime`, and `host_runtime` from stdout
+    # TODO - Obtain `host_runtime` from stdout
     newlinesplit = stdout.split('\n')
     # print(newlinesplit) 
-    # YEP, this is hard-coded with some magic numbers that depend on the output of `../build/matmul`
-    # It has to be
-    line_numberOfSMs = newlinesplit[1]
-    line_CUDAruntime = newlinesplit[2]
-    line_CPUMTruntime = newlinesplit[3]
-    numberOfSMs = int(line_numberOfSMs.split('=')[1])
-    device_runtime = float(line_CUDAruntime.split('=')[1].split('ms')[0])
+    # Has to be hard-coded with some magic numbers that depend on the output of `../build/cpu_matmul`
+    line_CPUMTruntime = newlinesplit[0]
     host_runtime = float(line_CPUMTruntime.split('=')[1].split('us')[0])
-    parse_dict['numberOfSMs'] = numberOfSMs
-    parse_dict['device_runtime'] = device_runtime
+    # print(host_runtime)
     parse_dict['host_runtime'] = host_runtime # Currently in [us]
     return parse_dict
 
 # TODO - Refactor this for CPU benchmarking
-# Run `matmul`, and collect data into dict
+# Run `cpu_matmul`, and collect data into dict
 def runMatmul(N: int, nrun: int) -> dict:
     data_dict = {}
     data_dict = initializeDataDict(data_dict)
@@ -75,11 +69,15 @@ def processN(N: int, nruns: int, thread_count: int, dir_name: str) -> pd.DataFra
         # Use list comprehension to create a list of futures
         futures = [executor.submit(runMatmul, N, nrun) for nrun in range(1, nruns + 1)]
 
+        completed_futures, _ = concurrent.futures.wait(futures)
+        
         # Wait for all tasks to complete using as_completed
         raw_dict = {}
         raw_dict = initializeDataDict(raw_dict)
         raw_df = pd.DataFrame(raw_dict)
-        for future in concurrent.futures.as_completed(futures):
+        # for future in concurrent.futures.as_completed(futures):
+        for future in completed_futures:
+            # print(future.result())
             # Get, and merge, the benchmarking data of all the workers
             worker_df = pd.DataFrame(future.result())
             # print(worker_df)

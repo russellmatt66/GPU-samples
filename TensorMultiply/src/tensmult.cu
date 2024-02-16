@@ -9,9 +9,11 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <thread>
+#include <cstdio>
 
-#include "tensmult.cuh"
+#include "../include/tensmult.cuh"
+
+// #include "../include/tensmult.cu"
 
 // row-major order
 #define IDX3D(i, j, k, N) (k*N*N + i*N + j)
@@ -26,7 +28,7 @@ __global__ void InitializeTensors(float *C, float *A, float *B, const uint64_t N
 
 	// Generate random number b/w [0.0, 1.0]
     curandState_t state;
-    if (tidx < N && tidy < N){
+    if (tidx < N && tidy < N && tidz < N){
         curand_init(seed, tidx, 0, &state);
     }
 
@@ -65,32 +67,47 @@ __global__ void TensorMultiply(float *C, const float *A, const float *B, const u
 	return;
 }
 
-// This was for zeroing out h_C b/w parallel and sequential CPU run
-// void hostSetAllZero(float *C, const uint64_t N, const int begin, const int end){
-// 	// row-major storage
-//     for (int i = begin; i < end; i++){ 
-//         for (int j = begin; j < end; j++){
-//             for (int k = begin; k < end; k++){
-// 				C[IDX3D(i, j, k, N)] = 0.0;
-// 			}
-//         }
-//     }
-//     return;
-// }
+// https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define checkCuda(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 
-void HostTensorMultiply(float* C, const float* A, const float* B, const uint64_t N, const int num_thread, const int stride){
-	float sum;
-	for (int i = num_thread; i < N; i += stride){
-		for (int j = num_thread; j < N; j += stride){
-			for (int k = num_thread; k < N; k += stride){
-				sum = 0.0;
-				for (int l = 0; l < N; l++){
-					sum += A[IDX3D(i, j, l, N)] * B[IDX3D(l, l, k, N)];
-				}
-				C[IDX3D(i, j, k, N)] = sum;
-			}
-		}
-	}
-	return;
-} 
+/* 
+TODO 
 
+*/
+int main(int argc, char* argv[]){
+	uint64_t N = atoll(argv[1]);
+	int SM_mult_x = atoi(argv[2]);
+	int SM_mult_y = atoi(argv[3]);
+	int SM_mult_z = atoi(argv[4]);
+	int num_threads_per_block_x = atoi(argv[5]);
+	int num_threads_per_block_y = atoi(argv[6]);
+	int num_threads_per_block_z = atoi(argv[7]);
+	
+	uint64_t requested_memory = N*N*N*sizeof(float);
+
+	float *d_C, *d_A, *d_B; 
+
+	checkCuda(cudaMalloc(&d_C, requested_memory));
+	checkCuda(cudaMalloc(&d_A, requested_memory));
+	checkCuda(cudaMalloc(&d_B, requested_memory));
+
+	/* Initialize rank-3 tensors */
+
+	/* Call TensorMultiply */
+
+	/* Write data out to be caught by benchmarking */
+
+	// Free 
+	cudaFree(d_A);
+	cudaFree(d_B);
+	cudaFree(d_C);
+	return 0;
+}

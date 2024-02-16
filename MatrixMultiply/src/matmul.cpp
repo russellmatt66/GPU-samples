@@ -17,6 +17,18 @@ int main(int argc, char* argv[]){
 	h_B = (float*)malloc(requested_matrix_memory);
 	h_C = (float*)malloc(requested_matrix_memory);
 
+	/* TODO - Initialize matrices */
+	std::thread i1(initMatrices, h_C, h_A, h_B, N, 0, N/8);
+	std::thread i2(initMatrices, h_C, h_A, h_B, N, N/8, N/4);
+	std::thread i3(initMatrices, h_C, h_A, h_B, N, N/4, 3*N/8);
+	std::thread i4(initMatrices, h_C, h_A, h_B, N, 3*N/8, N/2);
+	std::thread i5(initMatrices, h_C, h_A, h_B, N, N/2, 5*N/8);
+	std::thread i6(initMatrices, h_C, h_A, h_B, N, 5*N/8, 3*N/4);
+	std::thread i7(initMatrices, h_C, h_A, h_B, N, 3*N/4, 7*N/8);
+	std::thread i8(initMatrices, h_C, h_A, h_B, N, 7*N/8, N);
+
+	i1.join(); i2.join(); i3.join(); i4.join(); i5.join(); i6.join(); i7.join(); i8.join();
+
     // Host Code
 	// Parallel
 	auto start_host = std::chrono::high_resolution_clock::now();
