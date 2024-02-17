@@ -9,15 +9,15 @@ import time
 CONFIGURATION
 '''
 # Define a problem space
-min_N = 4
+min_N = 14
 max_N = 14 # RTX 2060 limit (~6.0 GB GDDR6)
 N_sizes = [2**i for i in range(min_N, max_N + 1)]
 
 # Define a configuration space
 SM_multipliers_x = [2**i for i in range(6)] # This multiplies the number of device SMs (30 for RTX 2060) to give number of blocks 
 SM_multipliers_y = [2**i for i in range(6)]
-num_threads_per_blocks_x = [2**i for i in range(5, 11)] # [32, 64, 128, 256, 512, 1024] 
-num_threads_per_blocks_y = [2**i for i in range(5, 11)]
+num_threads_per_blocks_x = [2**i for i in range(6, 11)] # [64, 128, 256, 512, 1024] 
+num_threads_per_blocks_y = [2**i for i in range(6, 11)]
 
 exec_configs = []
 for multiplier_x in SM_multipliers_x:

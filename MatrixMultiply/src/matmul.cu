@@ -114,7 +114,7 @@ int main(int argc, char* argv[]){
     float time;
 
 	// Initialize Matrices
-	InitializeMatrices<<<block_dimensions, grid_dimensions>>>(C, A, B, N, 1234); // Magic number at the end is seed for rng
+	InitializeMatrices<<<grid_dimensions, block_dimensions>>>(C, A, B, N, 1234); // Magic number at the end is seed for rng
 	checkCuda(cudaDeviceSynchronize());
 
 	// Perform Matrix Multiplication

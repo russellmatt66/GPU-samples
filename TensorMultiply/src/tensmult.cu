@@ -13,8 +13,6 @@
 
 #include "../include/tensmult.cuh"
 
-// #include "../include/tensmult.cu"
-
 // row-major order
 #define IDX3D(i, j, k, N) (k*N*N + i*N + j)
 
@@ -34,7 +32,7 @@ __global__ void InitializeTensors(float *C, float *A, float *B, const uint64_t N
 
 	for (int i = tidx; i < N; i += xthreads){
 		for (int j = tidy; j < N; j += ythreads){
-			for (int k = tidz; k < N; j += zthreads){
+			for (int k = tidz; k < N; k += zthreads){
 				A[IDX3D(i, j, k, N)] = static_cast<float>(curand_uniform(&state));
 				B[IDX3D(i, j, k, N)] = static_cast<float>(curand_uniform(&state));
 				C[IDX3D(i, j, k, N)] = 0.0;
@@ -80,7 +78,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 /* 
 TODO 
-
+(1) Use Nsight systems to observe what's going on during a run
+	- Timing data is the same no matter what the inputs are
 */
 int main(int argc, char* argv[]){
 	uint64_t N = atoll(argv[1]);
@@ -99,11 +98,36 @@ int main(int argc, char* argv[]){
 	checkCuda(cudaMalloc(&d_A, requested_memory));
 	checkCuda(cudaMalloc(&d_B, requested_memory));
 
+	// Get device attributes
+	int deviceID; 
+	int numberOfSMs;
+
+	cudaGetDevice(&deviceID);
+	cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, deviceID);
+
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	float time;
+
 	/* Initialize rank-3 tensors */
+	dim3 grid_dimensions(numberOfSMs * SM_mult_x, numberOfSMs * SM_mult_y, numberOfSMs * SM_mult_z);
+	dim3 block_dimensions(num_threads_per_block_x, num_threads_per_block_y, num_threads_per_block_z);
+
+	InitializeTensors<<<grid_dimensions, block_dimensions>>>(d_C, d_A, d_B, N, 1234);
+	checkCuda(cudaDeviceSynchronize());
 
 	/* Call TensorMultiply */
+	cudaEventRecord(start, 0);
+	TensorMultiply<<<grid_dimensions, block_dimensions>>>(d_C, d_A, d_B, N);
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&time, start, stop);
+	// checkCuda(cudaDeviceSynchronize());
 
 	/* Write data out to be caught by benchmarking */
+	std::cout << "Size of tensors = " << pow(N,3) << std::endl;
+	std::cout << "Elapsed CUDA kernel time = " << time << " ms" << std::endl;
 
 	// Free 
 	cudaFree(d_A);
