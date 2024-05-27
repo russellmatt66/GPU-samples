@@ -1,5 +1,17 @@
+# Ignoring sparseMatrix build files
+sparseMatrix/build/CMakeCache.txt
+sparseMatrix/build/CMakeFiles/
+sparseMatrix/build/Makefile
+sparseMatrix/build/butterfly-mm
+sparseMatrix/build/cmake_install.cmake
+sparseMatrix/build/libinit_CSR_lib.a
+sparseMatrix/build/libspGEMM_lib.a
+sparseMatrix/build/main
+
+# Ignoring BinarySearch binaries and nsys stuff
 BinarySearch/binarysearchCUDA
 BinarySearch/benchmark
 !BinarySearch/benchmarking-data/README.md
 BinarySearch/*.nsys-rep
 BinarySearch/*.sqlite
+
