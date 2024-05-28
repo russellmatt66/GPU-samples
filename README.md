@@ -1,5 +1,5 @@
 # Directory Structure
-`sparseMatrix/`
+`spmm-butterfly/`
 - Project to implement efficient sparse matrix-matrix multiplication (spMM) for Butterfly matrices with CUDA
 
 `BookWork/`
