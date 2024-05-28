@@ -1,4 +1,13 @@
 # Directory Structure
+`sparseMatrix/`
+- Project to implement efficient sparse matrix-matrix multiplication (spMM) for Butterfly matrices with CUDA
+
+`BookWork/`
+- Code written in the process of reading various GPU programming books 
+
+`MiscAlgorithms/`
+- Projects implementing miscellaneous algorithms on a GPU, e.g., binary search, dense MM, transpose, etc.  
+
 BinarySearch/ (PEN)
 - CUDA implementation of binary search
 - GPU: GeForce GTX 960 (Maxwell 5.2) 
