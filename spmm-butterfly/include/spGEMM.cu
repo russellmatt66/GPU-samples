@@ -6,7 +6,8 @@ What is the exact state of `C` coming in?
 A priori, we can know what its dimensions are without needing to do any computation
 Given the number of rows in `C`, we know how long `C->row_ptr` is: "num_rows + 1" 
 Given the number of nonzero (nnz) entries in 'C' we know how long `C->values`, and `C->columns` are: "nnz"
-We do NOT know nnz a priori, unless we run through the calculation initially to determine this number 
+
+A key piece of information is to know how many nnz entries there are in `C`.
 
 The number of columns in `C` just tells us the upper bound on the values we will find in `C->columns`
 
@@ -24,7 +25,7 @@ __global__ void spGEMM(sparseCSRMatrix* C, const sparseCSRMatrix* A, const spars
 
     float accumulator = 0.0; // known initial state
 
-    /* Implement GEMM between CSR matrices */
+    /* Implement GEMM between CSR butterfly matrices */
     if (tidx < C->num_rows){
         ridx_start = A->row_ptr[tidx];
         next_row_idx = A->row_ptr[tidx + 1];

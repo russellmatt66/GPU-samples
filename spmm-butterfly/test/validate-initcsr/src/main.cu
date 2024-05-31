@@ -3,7 +3,6 @@
 #include "../include/sparseMatrix.cuh"
 #include "../include/initCSR.cuh"
 
-/* Quality basis for validation of butterfly matrix creation */
 int main(int argc, char* argv[]){
 	int F = 1024; // X is FxL
 	int L = 1024; // W, and B_{i}, are LxL

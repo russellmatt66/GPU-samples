@@ -14,11 +14,11 @@ __host__ void initializeButterflyMatrix(int* h_rowptr, float* h_values, int* h_c
     for (int k = 1; k < 2 * L; k++){
         h_values[k] = 2.0;
 
-        if (h_rowptr[ridx] == k){ // first entry in the row
-            h_columns[k] = ridx < ridx ^ i ? ridx : ridx ^ i;
+        if (h_rowptr[ridx] == k) { // first entry in the row
+            h_columns[k] = (ridx < ridx ^ i) ? ridx : ridx^i;
         }
         else { // second entry in the row
-            h_columns[k] = ridx > ridx ^ i ? ridx : ridx ^ i;
+            h_columns[k] = (ridx > ridx ^ i) ? ridx : ridx^i; 
         }
         
         if (h_rowptr[ridx] < k) {
